@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MythAI — persona-driven RAG chat for Indian mythology
 
 A full-stack RAG (Retrieval-Augmented Generation) chat system that allows users to interact with mythological personas (Krishna, Shiva, Lakshmi) grounded in canonical Sanskrit texts. Replies are citation-backed, emotionally aware, and respect cultural sensitivity.
@@ -413,3 +414,6 @@ For production, ensure all source texts have proper licensing and attribution.
 ---
 
 **Happy exploring the depths of Indian mythology with MythAI! 🙏**
+=======
+# Mythai
+>>>>>>> 2ab1a3d31f5220a68f683e565827c1e4f41067a0
