@@ -82,9 +82,9 @@ function makeRequest(path, method = 'GET', body = null) {
 }
 
 /**
- * Search for similar vectors
+ * Search for similar vectors with optional filters
  */
-async function searchVectors(vector, limit = 4, scoreThreshold = 0.0) {
+async function searchVectors(vector, limit = 4, filters = null, scoreThreshold = 0.0) {
   const path = `/collections/${COLLECTION_NAME}/points/search`;
   
   const body = {
@@ -93,6 +93,38 @@ async function searchVectors(vector, limit = 4, scoreThreshold = 0.0) {
     score_threshold: scoreThreshold,
     with_payload: true,
   };
+
+  // Add filters if provided
+  if (filters) {
+    const filterConditions = [];
+    
+    if (filters.religion) {
+      filterConditions.push({
+        key: 'religion',
+        match: { value: filters.religion }
+      });
+    }
+    
+    if (filters.deity_group) {
+      filterConditions.push({
+        key: 'deity_group',
+        match: { value: filters.deity_group }
+      });
+    }
+    
+    if (filters.books && filters.books.length > 0) {
+      filterConditions.push({
+        key: 'book',
+        match: { any: filters.books }
+      });
+    }
+    
+    if (filterConditions.length > 0) {
+      body.filter = {
+        must: filterConditions
+      };
+    }
+  }
 
   try {
     const response = await makeRequest(path, 'POST', body);
@@ -160,9 +192,8 @@ async function ensureCollection(vectorSize = 1536) {
 
     // Create collection if it doesn't exist
     if (response.status === 404) {
-      const createPath = '/collections';
+      const createPath = `/collections/${COLLECTION_NAME}`;
       const createBody = {
-        name: COLLECTION_NAME,
         vectors: {
           size: vectorSize,
           distance: 'Cosine',

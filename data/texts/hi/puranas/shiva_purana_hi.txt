@@ -1,0 +1,16 @@
+METADATA: title=Shiva Purana; type=Mahapurana; language=hi; category=eastern; religion=hindu; book=Shiva Purana; deity_group=shiva; source=Sample/Summary; note=Full Purana texts require licensed translations
+
+शिव पुराण अठारह पुराणों में से एक है। यह भगवान शिव और देवी पार्वती के बारे में है।
+
+मुख्य भाग:
+- विद्येश्वर संहिता: सृष्टि और ब्रह्मांड
+- रुद्र संहिता: शिव का जन्म और जीवन
+- शतरुद्र संहिता: शिव के रूप
+- उमा संहिता: पार्वती की महिमा
+
+महत्वपूर्ण कथाएं:
+- शिव-पार्वती विवाह
+- गणेश और कार्तिकेय का जन्म
+- दक्ष यज्ञ का विनाश
+- समुद्र मंथन
+- शिव का तांडव नृत्य

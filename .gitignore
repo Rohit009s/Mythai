@@ -1,7 +1,48 @@
+# Dependencies
 node_modules/
 frontend/node_modules/
+frontend/dist/
+
+# Environment variables (contains API keys and secrets)
 .env
+.env.local
+.env.production
+
+# IDE
 /.vscode/
+.idea/
+
+# Build outputs
 dist/
-data/embeddings.json
+build/
+
+# Embedding files (too large for Git - 164MB+)
+data/embeddings/*.json
+!data/embeddings/.gitkeep
+
+# Audio files
 audio/
+*.wav
+*.mp3
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Python cache (for TTS service)
+__pycache__/
+*.pyc
+*.pyo
+tts-service/__pycache__/
+
+# Model cache
+.cache/
+models/

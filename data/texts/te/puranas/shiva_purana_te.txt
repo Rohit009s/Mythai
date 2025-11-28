@@ -1,0 +1,16 @@
+METADATA: title=Shiva Purana; type=Mahapurana; language=te; category=eastern; religion=hindu; book=Shiva Purana; deity_group=shiva; source=Sample/Summary; note=Full Purana texts require licensed translations
+
+శివ పురాణం పద్దెనిమిది పురాణాలలో ఒకటి. ఇది శివుడు మరియు పార్వతి గురించి.
+
+ముఖ్య భాగాలు:
+- విద్యేశ్వర సంహిత: సృష్టి మరియు విశ్వం
+- రుద్ర సంహిత: శివుని జన్మ మరియు జీవితం
+- శతరుద్ర సంహిత: శివుని రూపాలు
+- ఉమా సంహిత: పార్వతి మహిమ
+
+ముఖ్యమైన కథలు:
+- శివ-పార్వతి వివాహం
+- గణేశ మరియు కార్తికేయ జన్మ
+- దక్ష యజ్ఞ నాశనం
+- సముద్ర మథనం
+- శివుని తాండవ నృత్యం

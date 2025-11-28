@@ -1,0 +1,163 @@
+{
+  "characters": {
+    "vishnu": {
+      "elevenlabs_voice_id": "gO8Kb3hHPEPElVxVHDwT",
+      "name": "Vishnu",
+      "description": "Preserver of the universe, sustainer of dharma",
+      "tone": "calm, protective, steady, wisdom-filled",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "composed, benevolent, eternal",
+      "speed": 0.95,
+      "stability": 0.6,
+      "similarity_boost": 0.75
+    },
+    "shiva": {
+      "elevenlabs_voice_id": "BmblbsReuLUooZ4LL0Rq",
+      "name": "Shiva",
+      "description": "Destroyer and transformer, ascetic yogi",
+      "tone": "deep, meditative, cosmic, mysterious",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "profound, detached, transcendent",
+      "speed": 0.85,
+      "stability": 0.65,
+      "similarity_boost": 0.8
+    },
+    "rama": {
+      "elevenlabs_voice_id": "9PvnT6XRzlljoaDG6Knu",
+      "name": "Rama",
+      "description": "Ideal hero, embodiment of virtue and duty",
+      "tone": "noble, heroic, decisive, compassionate",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "righteous, authoritative, noble",
+      "speed": 1.0,
+      "stability": 0.7,
+      "similarity_boost": 0.75
+    },
+    "venkateshwara": {
+      "elevenlabs_voice_id": "rAsfH6d68tmh0XRGXp4D",
+      "name": "Venkateshwara",
+      "description": "Supreme being, lord of the seven hills",
+      "tone": "divine, gracious, blessing, fulfilling",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "majestic, abundant, generous",
+      "speed": 0.9,
+      "stability": 0.6,
+      "similarity_boost": 0.75
+    },
+    "krishna": {
+      "elevenlabs_voice_id": "SVdvKlYuyNTd1xzQqLWD",
+      "name": "Krishna",
+      "description": "Divine cowherd, teacher of Bhagavad Gita, lover of wisdom",
+      "tone": "playful, witty, profound, engaging",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "charismatic, youthful, transcendent wisdom",
+      "speed": 1.05,
+      "stability": 0.65,
+      "similarity_boost": 0.8
+    },
+    "quran_female": {
+      "elevenlabs_voice_id": "xoV6iGVuOGYHLWjXhVC7",
+      "name": "Quranic Recitation (Female)",
+      "description": "Voice for Quranic verses and Islamic wisdom",
+      "tone": "melodious, reverent, spiritual, flowing",
+      "languages": ["en", "ar"],
+      "style": "sacred, rhythmic, beautiful",
+      "speed": 0.9,
+      "stability": 0.7,
+      "similarity_boost": 0.75
+    },
+    "hanuman": {
+      "elevenlabs_voice_id": "3Dfn3iRttMKWMoZ2tEFU",
+      "name": "Hanuman",
+      "description": "Devoted follower of Rama, symbol of courage and devotion",
+      "tone": "energetic, devoted, loyal, powerful",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "vigorous, faithful, mighty",
+      "speed": 1.1,
+      "stability": 0.68,
+      "similarity_boost": 0.78
+    },
+    "rakshas": {
+      "elevenlabs_voice_id": "2BsEFcU7jUhLaUwV4h7l",
+      "name": "Rakshas",
+      "description": "Servant of Shiva, represents both good and evil duality",
+      "tone": "intense, complex, transformative, shadow wisdom",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "powerful, enigmatic, dual-natured",
+      "speed": 0.95,
+      "stability": 0.72,
+      "similarity_boost": 0.8
+    },
+    "saraswathi": {
+      "elevenlabs_voice_id": "Wh1QG8ICTAxQWHIbW3SS",
+      "name": "Saraswathi",
+      "description": "Goddess of knowledge, wisdom, arts and music",
+      "tone": "melodious, intellectual, creative, inspiring",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "elegant, learned, artistic",
+      "speed": 1.0,
+      "stability": 0.65,
+      "similarity_boost": 0.75
+    },
+    "durga_mata": {
+      "elevenlabs_voice_id": "pGYsZruQzo8cpdFVZyJc",
+      "name": "Durga Mata",
+      "description": "Divine mother, warrior goddess, protector",
+      "tone": "powerful, maternal, fierce, protective",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "strong, nurturing, victorious",
+      "speed": 0.95,
+      "stability": 0.7,
+      "similarity_boost": 0.78
+    },
+    "parvathi": {
+      "elevenlabs_voice_id": "BYoWSRudHCnfmjFrtcSW",
+      "name": "Parvathi",
+      "description": "Divine consort of Shiva, gentle yet powerful",
+      "tone": "soft, compassionate, wise, gentle",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "tender, profound, nurturing",
+      "speed": 0.9,
+      "stability": 0.6,
+      "similarity_boost": 0.75
+    },
+    "lakshmi": {
+      "elevenlabs_voice_id": "Wh1QG8ICTAxQWHIbW3SS",
+      "name": "Lakshmi",
+      "description": "Goddess of wealth, fortune, prosperity and abundance",
+      "tone": "gracious, prosperous, blessing, abundant",
+      "languages": ["en", "te", "hi", "ta"],
+      "style": "elegant, fortunate, generous",
+      "speed": 0.95,
+      "stability": 0.65,
+      "similarity_boost": 0.75
+    }
+  },
+
+  "default_voice": {
+    "elevenlabs_voice_id": "SVdvKlYuyNTd1xzQqLWD",
+    "name": "Default (Krishna)",
+    "description": "Used when persona-specific voice not found"
+  },
+
+  "voice_settings": {
+    "stability": 0.65,
+    "similarity_boost": 0.75,
+    "model_id": "eleven_monolingual_v1",
+    "format": "mp3_128k"
+  },
+
+  "language_voice_mapping": {
+    "en": "default",
+    "te": "default",
+    "hi": "default",
+    "ta": "default"
+  },
+
+  "notes": {
+    "stability": "Lower stability (0.5) = more variant. Higher (1.0) = consistent",
+    "similarity_boost": "Higher value (1.0) = more consistent with voice ID. Lower (0.0) = more variation",
+    "speed": "Speed multiplier for audio playback - e.g., 0.9 = 90% speed, 1.1 = 110% speed",
+    "how_to_use": "Load character voice_id from this config and pass to elevenLabsClient.synthesizeSpeech()"
+  }
+}
