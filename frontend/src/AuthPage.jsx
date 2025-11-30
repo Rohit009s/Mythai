@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './AuthPage.css';
 
 export default function AuthPage({ onLogin }) {
@@ -146,8 +146,29 @@ export default function AuthPage({ onLogin }) {
     });
   };
 
+  // Load Unicorn Studio script
+  useEffect(() => {
+    if (!window.UnicornStudio) {
+      window.UnicornStudio = { isInitialized: false };
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.36/dist/unicornStudio.umd.js';
+      script.onload = () => {
+        if (!window.UnicornStudio.isInitialized) {
+          window.UnicornStudio.init();
+          window.UnicornStudio.isInitialized = true;
+        }
+      };
+      (document.head || document.body).appendChild(script);
+    }
+  }, []);
+
   return (
     <div className="auth-page">
+      {/* Unicorn Studio Animation Background */}
+      <div className="unicorn-background">
+        <div data-us-project="gz8kKmsEaxnJTHVKWz8e" style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}></div>
+      </div>
+
       <div className="auth-container">
         <div className="auth-header">
           <h1>🕉️ MythAI</h1>
