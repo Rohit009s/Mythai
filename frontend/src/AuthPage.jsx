@@ -164,9 +164,21 @@ export default function AuthPage({ onLogin }) {
 
   return (
     <div className="auth-page">
-      {/* Unicorn Studio Animation Background */}
+      {/* Unicorn Studio Animation Backgrounds - Dual Layer */}
       <div className="unicorn-background">
-        <div data-us-project="gz8kKmsEaxnJTHVKWz8e" style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}></div>
+        {/* Login Animation */}
+        <div 
+          className={`unicorn-layer ${isLogin ? 'active' : ''}`}
+          data-us-project="gz8kKmsEaxnJTHVKWz8e" 
+          style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}
+        ></div>
+        
+        {/* Registration Animation */}
+        <div 
+          className={`unicorn-layer ${!isLogin ? 'active' : ''}`}
+          data-us-project="Dc986gSgwNDzhULkcgaz" 
+          style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}
+        ></div>
       </div>
 
       <div className="auth-container">

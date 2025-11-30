@@ -20,6 +20,16 @@
   pointer-events: none;
 }
 
+/* Unicorn Animation Layers with Smooth Transitions */
+.unicorn-layer {
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.unicorn-layer.active {
+  opacity: 1;
+}
+
 .auth-container {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
