@@ -7,36 +7,39 @@
 const https = require('https');
 
 const HF_API_TOKEN = process.env.HUGGINGFACE_API_TOKEN;
-const HF_THINKER_MODEL = process.env.HUGGINGFACE_thinker_MODEL || 'mistralai/Mistral-7B-Instruct-v0.2';
+const HF_THINKER_MODEL = process.env.HUGGINGFACE_THINKER_MODEL || 'mistralai/Mistral-7B-Instruct-v0.2';
 const HF_SPEAKER_MODEL = process.env.HUGGINGFACE_SPEAKER_MODEL || 'meta-llama/Llama-3.1-8B-Instruct';
 const HF_MODEL = process.env.HUGGINGFACE_MODEL || HF_THINKER_MODEL;
-const HF_API_BASE = 'https://api-inference.huggingface.co'; // Inference API endpoint
+const HF_API_BASE = 'https://router.huggingface.co'; // New Router API endpoint (updated Nov 2024)
 
 /**
- * Call Hugging Face Inference API
+ * Call Hugging Face Inference API with retry logic
+ * Updated for new router.huggingface.co endpoint (Nov 2024)
  */
-async function callHuggingFace(prompt, model = HF_MODEL, maxTokens = 500) {
+async function callHuggingFace(prompt, model = HF_MODEL, maxTokens = 500, retries = 2) {
   return new Promise((resolve, reject) => {
+    // New API format for router endpoint
     const data = JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: maxTokens,
-        temperature: 0.7,
-        top_p: 0.9,
-        return_full_text: false,
-      },
+      model: model,
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.7,
+      top_p: 0.9,
+      stream: false
     });
 
     const options = {
-      hostname: 'api-inference.huggingface.co',
+      hostname: 'router.huggingface.co',
       port: 443,
-      path: `/models/${model}`,
+      path: '/v1/chat/completions',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': data.length,
       },
-      timeout: 60000, // 60 seconds for model loading
+      timeout: 90000, // 90 seconds for model loading
     };
 
     // Add authorization if token is provided (REQUIRED for new endpoint)
@@ -57,24 +60,116 @@ async function callHuggingFace(prompt, model = HF_MODEL, maxTokens = 500) {
         try {
           const parsed = JSON.parse(responseData);
           
-          // Handle different response formats
-          if (Array.isArray(parsed) && parsed[0]?.generated_text) {
-            resolve(parsed[0].generated_text);
-          } else if (parsed.generated_text) {
-            resolve(parsed.generated_text);
+          // Handle model loading state
+          if (parsed.error && typeof parsed.error === 'string' && parsed.error.includes('loading')) {
+            const estimatedTime = parsed.estimated_time || 20;
+            console.log(`[HuggingFace] Model loading, estimated time: ${estimatedTime}s`);
+            
+            if (retries > 0) {
+              console.log(`[HuggingFace] Retrying in ${estimatedTime}s... (${retries} retries left)`);
+              setTimeout(() => {
+                callHuggingFace(prompt, model, maxTokens, retries - 1)
+                  .then(resolve)
+                  .catch(reject);
+              }, estimatedTime * 1000);
+              return;
+            } else {
+              reject(new Error('Model loading timeout - please try again'));
+              return;
+            }
+          }
+          
+          // Handle OpenAI-compatible response format
+          if (parsed.choices && parsed.choices[0] && parsed.choices[0].message) {
+            resolve(parsed.choices[0].message.content);
           } else if (parsed.error) {
-            reject(new Error(parsed.error));
+            const errorMsg = typeof parsed.error === 'string' ? parsed.error : JSON.stringify(parsed.error);
+            reject(new Error(`HuggingFace API Error: ${errorMsg}`));
           } else {
-            resolve(responseData);
+            // Try to extract text from response
+            const text = typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
+            resolve(text);
           }
         } catch (error) {
-          reject(new Error(`Failed to parse response: ${responseData}`));
+          reject(new Error(`Failed to parse response: ${responseData.substring(0, 200)}`));
         }
       });
     });
 
     req.on('error', (error) => {
-      reject(error);
+      reject(new Error(`Request failed: ${error.message}`));
+    });
+
+    req.on('timeout', () => {
+      req.abort();
+      reject(new Error('Request timeout - model may be loading'));
+    });
+
+    req.write(data);
+    req.end();
+  });
+}
+
+/**
+ * Chat completion using Hugging Face (OpenAI-compatible format)
+ */
+async function chatCompletion(messages, model = HF_MODEL, temperature = 0.7, maxTokens = 500) {
+  return new Promise((resolve, reject) => {
+    // Use OpenAI-compatible format directly
+    const data = JSON.stringify({
+      model: model,
+      messages: messages,
+      max_tokens: maxTokens,
+      temperature: temperature,
+      top_p: 0.9,
+      stream: false
+    });
+
+    const options = {
+      hostname: 'router.huggingface.co',
+      port: 443,
+      path: '/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length,
+        'Authorization': `Bearer ${HF_API_TOKEN}`
+      },
+      timeout: 90000
+    };
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(responseData);
+          
+          // Handle errors
+          if (parsed.error) {
+            const errorMsg = typeof parsed.error === 'string' ? parsed.error : JSON.stringify(parsed.error);
+            reject(new Error(`HuggingFace API Error: ${errorMsg}`));
+            return;
+          }
+          
+          // Return OpenAI-compatible format
+          if (parsed.choices && parsed.choices[0]) {
+            resolve(parsed);
+          } else {
+            reject(new Error('Unexpected response format'));
+          }
+        } catch (error) {
+          reject(new Error(`Failed to parse response: ${responseData.substring(0, 200)}`));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(new Error(`Request failed: ${error.message}`));
     });
 
     req.on('timeout', () => {
@@ -85,44 +180,6 @@ async function callHuggingFace(prompt, model = HF_MODEL, maxTokens = 500) {
     req.write(data);
     req.end();
   });
-}
-
-/**
- * Chat completion using Hugging Face
- */
-async function chatCompletion(messages, model = HF_MODEL, temperature = 0.7, maxTokens = 500) {
-  // Convert messages to prompt format
-  let prompt = '';
-  
-  for (const msg of messages) {
-    if (msg.role === 'system') {
-      prompt += `System: ${msg.content}\n\n`;
-    } else if (msg.role === 'user') {
-      prompt += `User: ${msg.content}\n\n`;
-    } else if (msg.role === 'assistant') {
-      prompt += `Assistant: ${msg.content}\n\n`;
-    }
-  }
-  
-  prompt += 'Assistant:';
-
-  try {
-    const response = await callHuggingFace(prompt, maxTokens);
-    
-    // Format response to match OpenAI structure
-    return {
-      choices: [
-        {
-          message: {
-            content: response.trim(),
-          },
-        },
-      ],
-    };
-  } catch (error) {
-    console.error('[HuggingFace] Error:', error.message);
-    throw error;
-  }
 }
 
 /**

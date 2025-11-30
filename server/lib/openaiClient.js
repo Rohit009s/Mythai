@@ -102,15 +102,26 @@ async function chatCompletion(messages, model = process.env.OPENAI_CHAT_MODEL, t
     };
   }
   
+  // Try Hugging Face first
   if(USE_HUGGINGFACE){
-    const huggingface = getClient();
-    console.log('[LLM] Using Hugging Face (FREE)');
-    return await huggingface.chatCompletion(messages, model, temperature, parseInt(process.env.MAX_TOKENS || '500', 10));
+    try {
+      // Use official Hugging Face SDK
+      console.log('[LLM] Using Hugging Face Inference API (FREE)');
+      const hfSimple = require('./huggingfaceSimple');
+      if (hfSimple.isAvailable()) {
+        return await hfSimple.chatCompletion(messages, model, temperature, parseInt(process.env.MAX_TOKENS || '500', 10));
+      } else {
+        throw new Error('Hugging Face SDK not available or token not set');
+      }
+    } catch (hfError) {
+      console.error('[LLM] Hugging Face failed:', hfError.message);
+      throw new Error(`Hugging Face error: ${hfError.message}`);
+    }
   }
   
   if(USE_OPEN_ROUTER){
     const openRouter = getClient();
-    return await openRouter.chatCompletion(messages, model || 'mistralai/mistral-7b-instruct', temperature, parseInt(process.env.MAX_TOKENS || '800', 10));
+    return await openRouter.chatCompletion(messages, model || 'mistralai/mistral-7b-instruct:free', temperature, parseInt(process.env.MAX_TOKENS || '800', 10));
   }
   
   if(USE_TOGETHER){

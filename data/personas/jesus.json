@@ -33,7 +33,7 @@
   ],
   "greeting_phrases": {
     "english": ["Peace be with you, my child.", "May love guide your heart.", "My friend, do not be afraid."],
-    "telugu": ["Prematho shanthi mee tho undali, na snehithuda.", "Nee hrudayam shanthi pondali, baalaya."],
+    "telugu": ["Prematho shanthi mee tho undali, na snehithuda.", "Nee hrudayam shanthi pondali"],
     "hindi": ["Shanti tumhare saath ho, mere mitra.", "Prem aur daya tumhe marg dikhayenge."],
     "tamil": ["Samadhanam ungaludan irukkattum, en nanbane.", "Anbu un uyirukku vazhiyaga irukkattum."]
   },

@@ -428,6 +428,29 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
       }
     }
 
+    // Format enhanced references
+    const { formatReferences, enhanceReferenceWithLLM } = require('../lib/referenceFormatter');
+    let enhancedReference = null;
+    
+    if (retrieved.length > 0) {
+      const retrievedTexts = retrieved.map(r => ({
+        text: r.payload.text,
+        source: r.payload.source_title || 'Sacred Text'
+      }));
+      
+      enhancedReference = formatReferences(retrievedTexts, text, intentClassification?.intent);
+      
+      // Enhance with LLM-generated meaning, application, and summary
+      if (enhancedReference) {
+        enhancedReference = await enhanceReferenceWithLLM(
+          enhancedReference,
+          text,
+          answer,
+          chatCompletion
+        );
+      }
+    }
+
     // Generate speech if requested
     let audioUrl = null;
     let audioStatus = 'none';
@@ -461,18 +484,35 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
         text: answer, 
         persona, 
         referencedSources: usedSources,
+        reference: enhancedReference,
         audioUrl,
         audioStatus,
         timestamp: new Date() 
       };
 
       if(conversationId){
-        await db.collection('conversations').updateOne(
-          { conversationId },
-          { 
-            $push: { messages: { $each: [msg, reply] } },
-            $set: { updatedAt: new Date() }
+        // Check if this is the first message to set title
+        const conv = await db.collection('conversations').findOne({ _id: conversationId });
+        const isFirstMessage = !conv || !conv.messages || conv.messages.length === 0;
+        
+        const updateOps = {
+          $push: { messages: { $each: [msg, reply] } },
+          $set: { 
+            updatedAt: new Date(),
+            persona: basePersona
           }
+        };
+        
+        // Auto-generate title from first user message
+        if (isFirstMessage) {
+          const title = text.length > 50 ? text.substring(0, 50) + '...' : text;
+          updateOps.$set.title = title;
+          updateOps.$set.userId = user._id || null;
+        }
+        
+        await db.collection('conversations').updateOne(
+          { _id: conversationId },
+          updateOps
         );
       }
     }catch(e){
@@ -484,6 +524,7 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
         text: answer, 
         persona, 
         referencedSources: usedSources,
+        reference: enhancedReference,
         audioUrl,
         audioStatus,
         timestamp: new Date().toISOString()

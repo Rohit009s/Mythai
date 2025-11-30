@@ -1,6 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 import './App.css'
 import AuthPage from './AuthPage'
+import HomePage from './HomePage'
+import ChatHistory from './ChatHistory'
+import ReferenceCard from './ReferenceCard'
+import CosmicBackground from './CosmicBackground'
+import PageTransition from './PageTransition'
 
 const DEITIES = {
   hindu: [
@@ -67,6 +72,7 @@ const LANGUAGES = [
 ]
 
 export default function App() {
+  const [showTransition, setShowTransition] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
@@ -78,6 +84,8 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('hindu')
   const [playingAudio, setPlayingAudio] = useState(null)
+  const [showHomePage, setShowHomePage] = useState(true)
+  const [showHistory, setShowHistory] = useState(false)
   const audioRef = useRef(null)
   const messagesEndRef = useRef(null)
 
@@ -135,9 +143,38 @@ export default function App() {
     scrollToBottom()
   }, [messages])
 
+  const loadConversation = (conversation) => {
+    setConversationId(conversation._id)
+    setPersona(conversation.persona)
+    
+    const formattedMessages = conversation.messages.map(msg => ({
+      role: msg.sender === 'user' ? 'user' : 'assistant',
+      text: msg.text,
+      persona: msg.persona,
+      reference: msg.reference,
+      timestamp: msg.timestamp
+    }))
+    
+    setMessages(formattedMessages)
+    setShowHistory(false)
+    setShowHomePage(false)
+  }
+
+  const handleSelectDeity = (deityId) => {
+    setPersona(deityId)
+    setShowHomePage(false)
+    setMessages([])
+    setConversationId('')
+  }
+
   // Show auth page if not authenticated
   if (!isAuthenticated) {
     return <AuthPage onLogin={handleLogin} />
+  }
+
+  // Show home page for deity selection
+  if (showHomePage) {
+    return <HomePage onSelectDeity={handleSelectDeity} userReligion={user?.religion} />
   }
 
   async function createConversation() {
@@ -240,8 +277,14 @@ export default function App() {
     .find(d => d.id === persona)
 
   return (
-    <div className="app">
-      <audio ref={audioRef} onEnded={handleAudioEnded} />
+    <>
+      <PageTransition 
+        isActive={showTransition} 
+        onComplete={() => setShowTransition(false)} 
+      />
+      <div className="app">
+        <CosmicBackground />
+        <audio ref={audioRef} onEnded={handleAudioEnded} />
 
       {/* Status Indicator */}
       <div className="status-indicator">
@@ -443,5 +486,6 @@ export default function App() {
         </main>
       </div>
     </div>
+    </>
   )
 }

@@ -1,0 +1,107 @@
+.reference-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.reference-section {
+  margin-bottom: 20px;
+}
+
+.reference-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.section-icon {
+  font-size: 1.3rem;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.sacred-text-section {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.sacred-quote {
+  margin: 0 0 12px 0;
+  padding: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #1a202c;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.source-reference {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+  font-weight: 600;
+  text-align: right;
+}
+
+.meaning-section {
+  background: rgba(102, 126, 234, 0.1);
+  padding: 14px;
+  border-radius: 10px;
+  border-left: 3px solid #667eea;
+}
+
+.application-section {
+  background: rgba(118, 75, 162, 0.1);
+  padding: 14px;
+  border-radius: 10px;
+  border-left: 3px solid #764ba2;
+}
+
+.summary-section {
+  background: rgba(72, 187, 120, 0.1);
+  padding: 14px;
+  border-radius: 10px;
+  border-left: 3px solid #48bb78;
+}
+
+.section-content {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #2d3748;
+}
+
+.summary-text {
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .reference-card {
+    padding: 15px;
+  }
+
+  .sacred-quote {
+    font-size: 1rem;
+  }
+
+  .section-content {
+    font-size: 0.9rem;
+  }
+}

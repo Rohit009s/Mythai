@@ -1,0 +1,216 @@
+/* Zentry-style CSS Variables */
+:root {
+  --rui-colors-yellow: #EDFF66;
+  --rui-colors-purple: #5542FF;
+  --rui-colors-purple-gradient: linear-gradient(to bottom, #5542FF 0%, #B28EF2 100%);
+  --rui-colors-grey: #DFDFF2;
+  --rui-colors-black: #000000;
+  --rui-spacing-1: 0.5rem;
+  --rui-spacing-2: 1rem;
+  --rui-spacing-3: 1.5rem;
+  --rui-spacing-4: 2rem;
+  --rui-spacing-5: 2.5rem;
+  --sideMargin: 1.6rem;
+  --edgeMargin: var(--sideMargin);
+}
+
+@media only screen and (min-width: 769px) {
+  :root {
+    --sideMargin: 4rem;
+    --edgeMargin: calc(50vw - 65rem);
+  }
+}
+
+.cosmic-hero-3d {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--rui-colors-black);
+}
+
+/* Video Background */
+.video-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hero-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: 1;
+}
+
+.hero-fallback-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: 0;
+}
+
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.6) 50%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cosmic-hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cosmic-hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 720px;
+  padding: 0 var(--sideMargin);
+  text-align: left;
+}
+
+.cosmic-eyebrow {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--rui-colors-yellow);
+  margin-bottom: var(--rui-spacing-1);
+  font-weight: 600;
+}
+
+.cosmic-title {
+  font-size: clamp(2.8rem, 4vw, 4.5rem);
+  line-height: 1.1;
+  margin-bottom: var(--rui-spacing-2);
+  font-weight: 800;
+  color: var(--rui-colors-grey);
+}
+
+.cosmic-gradient-text {
+  background: var(--rui-colors-purple-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cosmic-subtitle {
+  font-size: 1.1rem;
+  color: var(--rui-colors-grey);
+  max-width: 32rem;
+  margin-bottom: var(--rui-spacing-4);
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.cosmic-hero-actions {
+  display: flex;
+  gap: var(--rui-spacing-2);
+  margin-bottom: var(--rui-spacing-3);
+  flex-wrap: wrap;
+}
+
+.cosmic-btn {
+  border-radius: 999px;
+  padding: 0.85rem 1.75rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+}
+
+.cosmic-primary {
+  background: var(--rui-colors-purple-gradient);
+  color: var(--rui-colors-black);
+  box-shadow: 0 0 24px rgba(85, 66, 255, 0.4);
+}
+
+.cosmic-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 32px rgba(85, 66, 255, 0.6);
+}
+
+.cosmic-ghost {
+  background: rgba(237, 255, 102, 0.1);
+  border: 1px solid var(--rui-colors-yellow);
+  color: var(--rui-colors-yellow);
+  backdrop-filter: blur(10px);
+}
+
+.cosmic-ghost:hover {
+  background: rgba(237, 255, 102, 0.2);
+  transform: translateY(-2px);
+  border-color: var(--rui-colors-yellow);
+}
+
+.cosmic-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rui-spacing-1);
+  font-size: 0.85rem;
+  color: var(--rui-colors-grey);
+}
+
+.cosmic-hero-meta span {
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(85, 66, 255, 0.2);
+  border: 1px solid rgba(85, 66, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cosmic-hero-content {
+    padding: 0 var(--sideMargin);
+  }
+
+  .cosmic-title {
+    font-size: 2.5rem;
+  }
+
+  .cosmic-subtitle {
+    font-size: 1rem;
+  }
+
+  .cosmic-hero-actions {
+    flex-direction: column;
+  }
+
+  .cosmic-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

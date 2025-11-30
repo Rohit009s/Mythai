@@ -1,0 +1,390 @@
+/* Using Zentry-style design system */
+.scroll-sections-container {
+  position: relative;
+  width: 100%;
+  background-color: var(--rui-colors-black);
+}
+
+/* Base Section Styles */
+.scroll-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem var(--sideMargin);
+  background-size: cover;
+  background-position: 50% 0%;
+  background-attachment: fixed;
+}
+
+.section-content {
+  max-width: 1200px;
+  width: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+.section-content.centered {
+  text-align: center;
+}
+
+/* Section Headers */
+.section-header {
+  margin-bottom: 4rem;
+}
+
+.section-header.centered {
+  text-align: center;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--rui-colors-yellow);
+  margin-bottom: var(--rui-spacing-2);
+  font-weight: 700;
+}
+
+.section-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: var(--rui-spacing-3);
+  background: var(--rui-colors-purple-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-subtitle {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--rui-colors-grey);
+  max-width: 600px;
+  opacity: 0.8;
+}
+
+.section-subtitle.large {
+  font-size: 1.35rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Section 1: Mythic Realms */
+.section-realms {
+  background: radial-gradient(circle at top, #1a1a2e 0%, #0a0a0f 100%);
+}
+
+.realm-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.realm-card {
+  padding: var(--rui-spacing-5);
+  border-radius: 24px;
+  background: rgba(85, 66, 255, 0.1);
+  border: 1px solid rgba(85, 66, 255, 0.3);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.realm-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--rui-colors-purple-gradient);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.realm-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--rui-colors-purple);
+  box-shadow: 0 20px 60px rgba(85, 66, 255, 0.4);
+}
+
+.realm-card:hover::before {
+  transform: scaleX(1);
+}
+
+.realm-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.5));
+}
+
+.realm-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: var(--rui-spacing-2);
+  color: var(--rui-colors-grey);
+}
+
+.realm-card p {
+  color: var(--rui-colors-grey);
+  opacity: 0.7;
+  line-height: 1.6;
+  margin-bottom: var(--rui-spacing-3);
+}
+
+.realm-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.realm-features span {
+  font-size: 0.85rem;
+  color: var(--rui-colors-yellow);
+  padding-left: var(--rui-spacing-1);
+}
+
+/* Section 2: Cosmic Data Stream */
+.section-cosmos {
+  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+}
+
+.cosmos-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 4rem 0;
+}
+
+.stat-box {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 20px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.stat-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #a855f7, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tech-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.tech-badge {
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c4b5fd;
+  font-size: 0.85rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+/* Section 3: Integrated Apps */
+.section-apps {
+  background: radial-gradient(circle at bottom, #1a1a2e 0%, #0a0a0f 100%);
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.app-card {
+  padding: 2rem;
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  backdrop-filter: blur(15px);
+  transition: all 0.3s ease;
+}
+
+.app-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow: 0 15px 40px rgba(34, 211, 238, 0.2);
+}
+
+.app-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.app-card h4 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+}
+
+.app-card p {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+/* Section 4: Vision */
+.section-vision {
+  background: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
+}
+
+.vision-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 3rem;
+  margin-top: 4rem;
+}
+
+.pillar {
+  text-align: center;
+}
+
+.pillar-number {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #a855f7, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.pillar h4 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.pillar p {
+  color: #9ca3af;
+  line-height: 1.6;
+}
+
+/* Section 5: Final CTA */
+.section-cta {
+  background: radial-gradient(circle at center, #1a1a2e 0%, #020617 100%);
+  min-height: 80vh;
+}
+
+.cta-title {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #ffffff, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cta-subtitle {
+  font-size: 1.25rem;
+  color: #9ca3af;
+  line-height: 1.7;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-actions {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cta-btn {
+  padding: 1rem 2.5rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cta-btn.primary {
+  background: var(--rui-colors-purple-gradient);
+  color: var(--rui-colors-black);
+  box-shadow: 0 0 30px rgba(85, 66, 255, 0.5);
+  font-weight: 700;
+}
+
+.cta-btn.primary:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 0 40px rgba(85, 66, 255, 0.7);
+}
+
+.cta-btn.secondary {
+  background: rgba(237, 255, 102, 0.1);
+  border: 2px solid var(--rui-colors-yellow);
+  color: var(--rui-colors-yellow);
+  backdrop-filter: blur(10px);
+  font-weight: 700;
+}
+
+.cta-btn.secondary:hover {
+  transform: translateY(-3px);
+  border-color: var(--rui-colors-yellow);
+  background: rgba(237, 255, 102, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .scroll-section {
+    padding: 5rem 1.5rem;
+  }
+
+  .section-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .realm-cards,
+  .app-grid,
+  .vision-pillars {
+    grid-template-columns: 1fr;
+  }
+
+  .cosmos-stats {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .cta-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cta-btn {
+    width: 100%;
+  }
+}
