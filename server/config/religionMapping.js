@@ -4,7 +4,7 @@
  */
 
 const RELIGION_MAPPING = {
-  hindu: {
+  hinduism: {
     name: 'Hinduism',
     primary_books: [
       'Bhagavad Gita',
@@ -90,7 +90,7 @@ const RELIGION_MAPPING = {
     }
   },
 
-  christian: {
+  christianity: {
     name: 'Christianity',
     primary_books: ['Bible', 'New Testament', 'Old Testament'],
     deities: {
@@ -188,7 +188,7 @@ const RELIGION_MAPPING = {
     }
   },
 
-  muslim: {
+  islam: {
     name: 'Islam',
     primary_books: ['Quran', 'Hadith'],
     deities: {
@@ -282,6 +282,160 @@ const RELIGION_MAPPING = {
         deity_group: 'huitzilopochtli',
         gender: 'male',
         description: 'God of War and Sun'
+      }
+    }
+  },
+
+  jainism: {
+    name: 'Jainism',
+    primary_books: ['Agamas', 'Tattvartha Sutra'],
+    deities: {
+      mahavira: {
+        name: 'Mahavira',
+        books: ['Agamas', 'Tattvartha Sutra'],
+        deity_group: 'mahavira',
+        gender: 'male',
+        description: 'The 24th Tirthankara, Great Hero'
+      }
+    }
+  },
+
+  mayan: {
+    name: 'Mayan Mythology',
+    primary_books: ['Popol Vuh', 'Mayan Codices'],
+    deities: {
+      kukulkan: {
+        name: 'Kukulkan',
+        books: ['Popol Vuh', 'Mayan Codices'],
+        deity_group: 'kukulkan',
+        gender: 'male',
+        description: 'Feathered Serpent, God of Wind and Rain'
+      }
+    }
+  },
+
+  chinese: {
+    name: 'Chinese Mythology',
+    primary_books: ['Tao Te Ching', 'I Ching', 'Journey to the West'],
+    deities: {
+      jade_emperor: {
+        name: 'Jade Emperor',
+        books: ['Journey to the West'],
+        deity_group: 'jade_emperor',
+        gender: 'male',
+        description: 'Supreme Deity, Ruler of Heaven'
+      }
+    }
+  },
+
+  korean: {
+    name: 'Korean Mythology',
+    primary_books: ['Samguk Yusa', 'Korean Folk Tales'],
+    deities: {
+      dangun: {
+        name: 'Dangun',
+        books: ['Samguk Yusa'],
+        deity_group: 'dangun',
+        gender: 'male',
+        description: 'Legendary Founder of Korea'
+      }
+    }
+  },
+
+  mesopotamian: {
+    name: 'Mesopotamian Mythology',
+    primary_books: ['Epic of Gilgamesh', 'Enuma Elish'],
+    deities: {
+      marduk: {
+        name: 'Marduk',
+        books: ['Enuma Elish'],
+        deity_group: 'marduk',
+        gender: 'male',
+        description: 'Chief God of Babylon, Creator Deity'
+      },
+      ishtar: {
+        name: 'Ishtar',
+        books: ['Epic of Gilgamesh'],
+        deity_group: 'ishtar',
+        gender: 'female',
+        description: 'Goddess of Love and War'
+      }
+    }
+  },
+
+  inca: {
+    name: 'Inca Mythology',
+    primary_books: ['Inca Chronicles', 'Inca Myths'],
+    deities: {
+      inti: {
+        name: 'Inti',
+        books: ['Inca Chronicles'],
+        deity_group: 'inti',
+        gender: 'male',
+        description: 'Sun God, Divine Ancestor of Incas'
+      }
+    }
+  },
+
+  yoruba: {
+    name: 'Yoruba (African)',
+    primary_books: ['Ifa Corpus', 'Yoruba Oral Traditions'],
+    deities: {
+      olodumare: {
+        name: 'Olodumare',
+        books: ['Ifa Corpus'],
+        deity_group: 'olodumare',
+        gender: 'male',
+        description: 'Supreme Creator God'
+      },
+      oshun: {
+        name: 'Oshun',
+        books: ['Yoruba Oral Traditions'],
+        deity_group: 'oshun',
+        gender: 'female',
+        description: 'Goddess of Love, Rivers, and Fertility'
+      }
+    }
+  },
+
+  dogon: {
+    name: 'Dogon (African)',
+    primary_books: ['Dogon Oral Traditions'],
+    deities: {
+      amma: {
+        name: 'Amma',
+        books: ['Dogon Oral Traditions'],
+        deity_group: 'amma',
+        gender: 'male',
+        description: 'Supreme Creator God'
+      }
+    }
+  },
+
+  zulu: {
+    name: 'Zulu (African)',
+    primary_books: ['Zulu Oral Traditions'],
+    deities: {
+      unkulunkulu: {
+        name: 'Unkulunkulu',
+        books: ['Zulu Oral Traditions'],
+        deity_group: 'unkulunkulu',
+        gender: 'male',
+        description: 'The Ancient One, Creator God'
+      }
+    }
+  },
+
+  asante: {
+    name: 'Asante (African)',
+    primary_books: ['Asante Oral Traditions'],
+    deities: {
+      nyame: {
+        name: 'Nyame',
+        books: ['Asante Oral Traditions'],
+        deity_group: 'nyame',
+        gender: 'male',
+        description: 'Sky God, Supreme Being'
       }
     }
   }

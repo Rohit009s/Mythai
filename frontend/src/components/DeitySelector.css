@@ -1,0 +1,691 @@
+.deity-selector-space {
+  position: relative;
+  min-height: 100vh;
+  background: #000;
+  overflow-x: hidden;
+  padding: 2rem;
+}
+
+/* Fixed Video Background */
+.video-background-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.background-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.deity-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Liquid Glass Header */
+.deity-header-glass {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: url(#deity-liquid-glass);
+  border-radius: 25px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.03),
+              0 2px 6px rgba(0, 0, 0, 0.08),
+              inset 3px 3px 0.5px -3px rgba(255, 255, 255, 0.9),
+              inset -3px -3px 0.5px -3px rgba(255, 255, 255, 0.85),
+              inset 0 0 6px 6px rgba(255, 255, 255, 0.12),
+              0 0 12px rgba(255, 255, 255, 0.15);
+  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.deity-header-glass:hover {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05),
+              0 4px 8px rgba(0, 0, 0, 0.1),
+              inset 3px 3px 0.5px -3px rgba(255, 255, 255, 0.95),
+              inset -3px -3px 0.5px -3px rgba(255, 255, 255, 0.9),
+              inset 0 0 8px 8px rgba(255, 255, 255, 0.15),
+              0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.header-content {
+  flex: 1;
+}
+
+.deity-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5),
+               0 2px 10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.welcome-icon {
+  width: 66px;
+  height: 66px;
+  filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  opacity: 0.9;
+}
+
+.deity-subtitle {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.user-info-glass {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.religion-badge {
+  padding: 0.5rem 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.logout-btn-glass {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: url(#deity-liquid-glass);
+  border: none;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.03),
+              0 2px 6px rgba(0, 0, 0, 0.08),
+              inset 2px 2px 0.5px -2px rgba(255, 255, 255, 0.9),
+              inset -2px -2px 0.5px -2px rgba(255, 255, 255, 0.85),
+              0 0 12px rgba(255, 255, 255, 0.15);
+}
+
+.logout-btn-glass:hover {
+  padding: 0.85rem 1.6rem;
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05),
+              0 4px 8px rgba(0, 0, 0, 0.1),
+              inset 2px 2px 0.5px -2px rgba(255, 255, 255, 0.95),
+              inset -2px -2px 0.5px -2px rgba(255, 255, 255, 0.9),
+              0 0 20px rgba(255, 255, 255, 0.25);
+}
+
+/* Category Filter */
+.category-filter-glass {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.category-btn-glass {
+  padding: 0.75rem 2rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: url(#deity-liquid-glass);
+  border: none;
+  border-radius: 25px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.03),
+              0 2px 6px rgba(0, 0, 0, 0.08),
+              inset 2px 2px 0.5px -2px rgba(255, 255, 255, 0.7),
+              inset -2px -2px 0.5px -2px rgba(255, 255, 255, 0.65);
+}
+
+.category-btn-glass:hover {
+  padding: 0.85rem 2.1rem;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  transform: scale(1.05);
+}
+
+.category-btn-glass.active {
+  background: rgba(255, 215, 0, 0.3);
+  color: white;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4),
+              0 4px 8px rgba(0, 0, 0, 0.1),
+              inset 2px 2px 0.5px -2px rgba(255, 255, 255, 0.9),
+              inset -2px -2px 0.5px -2px rgba(255, 255, 255, 0.85),
+              0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+/* Deity Grid */
+.deity-grid-glass {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-bottom: 4rem;
+}
+
+/* Liquid Glass Deity Cards */
+.deity-card-glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: url(#deity-liquid-glass);
+  border-radius: 25px;
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.03),
+              0 2px 6px rgba(0, 0, 0, 0.08),
+              inset 3px 3px 0.5px -3px rgba(255, 255, 255, 0.9),
+              inset -3px -3px 0.5px -3px rgba(255, 255, 255, 0.85),
+              inset 1px 1px 1px -0.5px rgba(255, 255, 255, 0.6),
+              inset -1px -1px 1px -0.5px rgba(255, 255, 255, 0.6),
+              inset 0 0 6px 6px rgba(255, 255, 255, 0.12),
+              inset 0 0 2px 2px rgba(255, 255, 255, 0.06),
+              0 0 12px rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.deity-card-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.deity-card-glass:hover {
+  padding: 2.2rem;
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05),
+              0 8px 16px rgba(0, 0, 0, 0.15),
+              inset 3px 3px 0.5px -3px rgba(255, 255, 255, 0.95),
+              inset -3px -3px 0.5px -3px rgba(255, 255, 255, 0.9),
+              inset 1px 1px 1px -0.5px rgba(255, 255, 255, 0.7),
+              inset -1px -1px 1px -0.5px rgba(255, 255, 255, 0.7),
+              inset 0 0 8px 8px rgba(255, 255, 255, 0.15),
+              inset 0 0 3px 3px rgba(255, 255, 255, 0.08),
+              0 0 25px rgba(102, 126, 234, 0.3);
+}
+
+.deity-card-glass:hover::before {
+  left: 100%;
+}
+
+/* Deity Image */
+.deity-image-container {
+  width: 100%;
+  height: 220px;
+  margin-bottom: 1.5rem;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.deity-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  filter: brightness(0.9) contrast(1.1);
+}
+
+.deity-card-glass:hover .deity-image {
+  transform: scale(1.15);
+  filter: brightness(1) contrast(1.2);
+}
+
+.deity-card-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.deity-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 1rem 0;
+  text-shadow: 0 0 15px rgba(102, 126, 234, 0.5),
+               0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.deity-desc {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin: 0 0 1rem 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.deity-category {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 15px;
+  font-size: 0.85rem;
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.no-deities-glass {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  color: white;
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .deity-selector-space {
+    padding: 1rem;
+  }
+
+  .deity-header-glass {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .user-info-glass {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .deity-grid-glass {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .category-filter-glass {
+    gap: 0.5rem;
+  }
+
+  .category-btn-glass {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .deity-title {
+    font-size: 1.8rem;
+  }
+
+  .deity-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .deity-card-glass {
+    padding: 1.5rem;
+  }
+
+  .deity-name {
+    font-size: 1.5rem;
+  }
+}
+
+
+/* Midnight Bazaar Theme - Deity Grid */
+.deity-content-wrapper {
+  position: relative;
+  z-index: 10;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.deity-grid-bazaar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2.5rem;
+  padding: 2rem 0;
+}
+
+.deity-card-bazaar {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  backdrop-filter: blur(35px) saturate(180%);
+  -webkit-backdrop-filter: blur(35px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-top: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 28px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 
+    0 8px 40px rgba(0, 0, 0, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 0 25px rgba(102, 126, 234, 0.15);
+}
+
+.deity-card-bazaar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.15) 0%,
+    rgba(118, 75, 162, 0.15) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 0;
+}
+
+.deity-card-bazaar:hover::before {
+  opacity: 1;
+}
+
+.deity-card-bazaar:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  transform: translateY(-15px) scale(1.04);
+  box-shadow: 
+    0 20px 70px rgba(102, 126, 234, 0.45),
+    0 10px 35px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 0 50px rgba(102, 126, 234, 0.35);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+}
+
+.deity-image-wrapper-bazaar {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
+}
+
+.deity-image-bazaar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.deity-card-bazaar:hover .deity-image-bazaar {
+  transform: scale(1.15);
+}
+
+.deity-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  opacity: 0.7;
+  transition: opacity 0.5s ease;
+  z-index: 2;
+}
+
+.deity-card-bazaar:hover .deity-image-overlay {
+  opacity: 0.4;
+}
+
+.deity-hover-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(102, 126, 234, 0.4) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 3;
+}
+
+.deity-card-bazaar:hover .deity-hover-effect {
+  opacity: 1;
+}
+
+.deity-info-bazaar {
+  padding: 1.8rem;
+  position: relative;
+  z-index: 1;
+}
+
+.deity-name-bazaar {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.8rem 0;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5),
+               0 0 20px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+.deity-card-bazaar:hover .deity-name-bazaar {
+  text-shadow: 0 2px 15px rgba(0, 0, 0, 0.6),
+               0 0 30px rgba(102, 126, 234, 0.6);
+  transform: translateY(-2px);
+}
+
+.deity-desc-bazaar {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  margin: 0 0 1.2rem 0;
+  font-weight: 400;
+}
+
+.deity-footer-bazaar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.deity-category-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.3) 0%,
+    rgba(118, 75, 162, 0.3) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.deity-select-hint {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.4s ease;
+}
+
+.deity-card-bazaar:hover .deity-select-hint {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .deity-grid-bazaar {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .deity-grid-bazaar {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .deity-card-bazaar {
+    border-radius: 22px;
+  }
+  
+  .deity-info-bazaar {
+    padding: 1.3rem;
+  }
+  
+  .deity-name-bazaar {
+    font-size: 1.3rem;
+  }
+  
+  .deity-desc-bazaar {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .deity-grid-bazaar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .deity-card-bazaar {
+    border-radius: 18px;
+  }
+  
+  .deity-info-bazaar {
+    padding: 1rem;
+  }
+  
+  .deity-name-bazaar {
+    font-size: 1.1rem;
+  }
+  
+  .deity-desc-bazaar {
+    font-size: 0.85rem;
+  }
+  
+  .deity-footer-bazaar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .deity-select-hint {
+    display: none;
+  }
+}
+
+
+/* Religion Section Headers */
+.religion-section {
+  margin-bottom: 4rem;
+}
+
+.religion-section-title {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: white;
+  margin: 0 0 2rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 25px rgba(102, 126, 234, 0.5);
+  text-transform: uppercase;
+}

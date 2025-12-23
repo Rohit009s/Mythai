@@ -4,8 +4,11 @@ const { ObjectId } = require('mongodb');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 /**
- * Authentication middleware
- * Verifies JWT token and attaches user info to request
+ * Authentication middleware with email verification enforcement
+ * Verifies JWT token, checks email verification, and attaches user info to request
+ * 
+ * CRITICAL: Only verified users can access spiritual guidance
+ * This ensures accountability and prevents abuse of emotional/spiritual content
  */
 async function authMiddleware(req, res, next) {
   try {
@@ -24,11 +27,38 @@ async function authMiddleware(req, res, next) {
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Attach user info to request
+    // Get user from database to check email verification status
+    const { getDb } = require('../db');
+    const db = getDb();
+    const user = await db.collection('users').findOne(
+      { _id: new ObjectId(decoded.userId) },
+      { projection: { emailVerified: 1, name: 1, age: 1, religion: 1, email: 1 } }
+    );
+
+    if (!user) {
+      return res.status(401).json({ 
+        error: 'User not found',
+        message: 'Please log in again'
+      });
+    }
+
+    // TRUST LAYER: Enforce email verification for spiritual guidance access
+    if (!user.emailVerified) {
+      return res.status(403).json({ 
+        error: 'Email verification required',
+        message: 'Please verify your email before accessing spiritual guidance. Check your inbox for the verification link.',
+        action: 'verify_email'
+      });
+    }
+
+    // Attach complete user info to request for AI personalization
     req.user = {
-      userId: new ObjectId(decoded.userId),
-      email: decoded.email,
-      religion: decoded.religion
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+      age: user.age,
+      religion: user.religion,
+      emailVerified: user.emailVerified
     };
 
     next();

@@ -7,6 +7,11 @@ const chatRoutes = require('./routes/chat');
 const convRoutes = require('./routes/conversations');
 const mcpRoutes = require('./routes/mcp');
 const { authMiddleware, optionalAuthMiddleware } = require('./middleware/auth');
+const metricsCollector = require('./lib/metricsCollector');
+const { getMCPClient } = require('./lib/mcpClient');
+
+// Make metrics collector globally available
+global.metricsCollector = metricsCollector;
 
 const PORT = process.env.PORT || 3000;
 
@@ -21,6 +26,14 @@ async function main(){
     console.warn('MongoDB connection failed (running in demo mode):', err.message);
   }
 
+  // Initialize MCP client
+  try {
+    const mcpClient = await getMCPClient();
+    console.log('[MCP] Client initialization completed');
+  } catch (err) {
+    console.warn('[MCP] Client initialization failed:', err.message);
+  }
+
   // Public routes (no auth required)
   app.use('/api/auth', authRoutes);
   app.use('/api/mcp', mcpRoutes); // MCP API routes
@@ -32,6 +45,17 @@ async function main(){
   app.get('/', (req,res) => res.send('MythAI backend with Auth'));
   
   app.get('/health', (req,res) => res.json({ status: 'ok', timestamp: new Date() }));
+  
+  // Metrics endpoint
+  app.get('/api/metrics', (req, res) => {
+    try {
+      const metrics = metricsCollector.getMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error('[Metrics] Error getting metrics:', error);
+      res.status(500).json({ error: 'Failed to get metrics' });
+    }
+  });
 
   app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
 }

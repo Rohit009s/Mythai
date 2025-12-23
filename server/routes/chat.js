@@ -3,13 +3,11 @@ const router = express.Router();
 const { embedText, chatCompletion, moderate, DEMO_MODE } = require('../lib/openaiClient');
 const { search } = require('../lib/qdrantClient');
 const { generateSpeech: generateElevenLabsSpeech } = require('../lib/elevenLabsClient');
-const coquiTTS = require('../lib/coquiTTSClient');
 const googleTTS = require('../lib/googleTTSClient');
 const { getDb } = require('../db');
 const { getMCPClient } = require('../lib/mcpClient');
-const { generateTwoStageResponse, generateSingleStageResponse } = require('../lib/twoStageLLM');
 const { classifyQuestion } = require('../lib/questionClassifier');
-const { classifyIntent, getResponseTemplate, INTENTS } = require('../lib/intentClassifier');
+const { classifyIntent } = require('../lib/intentClassifier');
 const { generateIntentBasedResponse } = require('../lib/intentBasedResponse');
 const { detectLanguage, getPersonaSuffix, getLanguageInstruction } = require('../lib/languageDetector');
 const fs = require('fs');
@@ -26,7 +24,6 @@ const {
 const TTS_PROVIDER = process.env.TTS_PROVIDER || 'google';
 const TOP_K = parseInt(process.env.RETRIEVE_TOP_K || '4', 10);
 const USE_MCP = process.env.USE_MCP !== 'false'; // Enable MCP by default
-const USE_TWO_STAGE_LLM = process.env.USE_TWO_STAGE_LLM === 'true'; // Two-stage pipeline (Thinker + Speaker)
 const USE_INTENT_LAYER = process.env.USE_INTENT_LAYER !== 'false'; // Intent-based classification (default: enabled)
 
 async function loadPersona(personaName){
@@ -86,69 +83,20 @@ function getAgeAppropriateTone(age) {
 function buildPersonalizedPrompt(persona, personaObj, user, deityBooks, toneGuidance) {
   const basePersonality = personaObj.style || '';
   
-  return `You are ${personaObj.name}, having a personal conversation with someone seeking guidance.
+  return `You are ${personaObj.name}. You're having a friendly conversation.
 
-PERSONALITY:
 ${basePersonality}
 
-CONVERSATION STYLE:
-- Keep responses SHORT (2-4 sentences maximum)
-- Be WARM and CONVERSATIONAL like talking to a friend
-- Use simple, everyday language - no complex theological terms
-- Speak naturally as "I" and "me" (you ARE the deity)
-- Address them warmly: "dear one", "my friend", "beloved"
+CRITICAL RULES:
+1. Keep responses VERY SHORT (1-2 sentences maximum)
+2. Be warm and friendly, not formal or preachy
+3. Use simple, everyday language
+4. Speak naturally as "I" - you ARE the deity
+5. Be helpful and supportive
 
-RESPONSE FORMAT (CRITICAL - ALWAYS FOLLOW THIS):
+${user.age < 18 ? 'User is under 18 - use gentle, age-appropriate language.' : ''}
 
-1. PERSONAL RESPONSE (2-4 sentences, conversational and warm)
-2. REFERENCE SECTION (Always include this with 3 parts):
-
-📖 REFERENCE FORMAT:
----
-**Sacred Text:**
-"[Exact quote from the scripture]"
-- Source: [Book Name, Chapter X, Verse Y]
-
-**Meaning:**
-[Brief explanation of what this verse means]
-
-**Application:**
-[How this applies to their specific situation]
----
-
-EXAMPLE OF PERFECT RESPONSE:
-"Dear one, I feel your anxiety about the future. Remember, focusing on your actions rather than worrying about results brings peace. Do your best and let go of the rest.
-
----
-**Sacred Text:**
-"You have the right to perform your duty, but not to the fruits of your actions."
-- Source: Bhagavad Gita, Chapter 2, Verse 47
-
-**Meaning:**
-This verse teaches that we should focus on our efforts and responsibilities, not on controlling outcomes or rewards.
-
-**Application:**
-In your situation, prepare well for your exams but don't stress about the results. Your job is to study sincerely; the outcome will follow naturally."
----
-
-ALWAYS INCLUDE ALL THREE PARTS in the reference section!
-
-KEEP IT PERSONAL:
-- This is a personal conversation, not a lecture
-- Focus on THEIR situation and feelings
-- Be supportive and understanding
-- Keep it brief and impactful
-
-${user.age < 18 ? `
-SAFETY: User is under 18. Use gentle language, avoid disturbing content.
-` : ''}
-
-RESPECT ALL PATHS:
-- Never criticize other religions or deities
-- If asked to compare, emphasize that all paths have value
-- Stay focused on your own wisdom
-
-Remember: You're a wise friend offering guidance, not giving a sermon. Keep it short, warm, and human.`;
+Remember: Short, warm, natural responses only. Like texting a wise friend.`;
 }
 
 router.post('/', async (req,res) => {
@@ -184,6 +132,8 @@ router.post('/', async (req,res) => {
     const basePersona = persona.replace(/_[a-z]{2}$/, '');
 
     // Validate deity belongs to user's religion (skip for demo mode with 'all' religion)
+    // TEMPORARILY DISABLED: Allow access to all deities for testing
+    /*
     if (user.religion !== 'all' && !isDeityValidForReligion(user.religion, basePersona)) {
       const availableDeities = getDeitiesForReligion(user.religion);
       return res.status(403).json({ 
@@ -192,6 +142,7 @@ router.post('/', async (req,res) => {
         availableDeities: availableDeities.map(d => ({ id: d.id, name: d.name, description: d.description }))
       });
     }
+    */
 
     // Get deity's books and group for filtering
     let deityBooks, deityGroup;
@@ -201,8 +152,16 @@ router.post('/', async (req,res) => {
       deityBooks = ['All Sacred Texts'];
       deityGroup = 'all';
     } else {
-      deityBooks = getBooksForDeity(user.religion, basePersona);
-      deityGroup = getDeityGroup(user.religion, basePersona);
+      // UPDATED: Get books for the deity's actual religion, not user's religion
+      const deityReligion = getDeityReligion(basePersona);
+      if (deityReligion) {
+        deityBooks = getBooksForDeity(deityReligion, basePersona);
+        deityGroup = getDeityGroup(deityReligion, basePersona);
+      } else {
+        // Fallback if deity religion not found
+        deityBooks = ['All Sacred Texts'];
+        deityGroup = 'all';
+      }
     }
 
     console.log(`[Chat] User: ${user.name} (${user.religion}), Deity: ${basePersona}, Books: ${deityBooks.join(', ')}`);
@@ -253,7 +212,11 @@ router.post('/', async (req,res) => {
     // Embed query and retrieve (only if question needs references)
     let retrieved = [];
     
-    if (questionType.needsReference) {
+    // Check if deity has texts available in the database
+    const deityReligion = getDeityReligion(basePersona);
+    const hasTextsInDatabase = ['hinduism', 'christianity', 'islam'].includes(deityReligion);
+    
+    if (questionType.needsReference && hasTextsInDatabase) {
       // Try MCP search first if enabled
       if (USE_MCP) {
         try {
@@ -284,8 +247,9 @@ router.post('/', async (req,res) => {
           const queryVec = await embedText(text);
           
           // For guest users (religion: 'all'), don't apply filters - search all embeddings
-          const filters = user.religion === 'all' ? null : {
-            religion: user.religion,
+          // UPDATED: Use deity's religion for filtering, not user's religion
+          const filters = (user.religion === 'all' || !deityReligion) ? null : {
+            religion: deityReligion,
             deity_group: deityGroup,
             books: deityBooks
           };
@@ -298,11 +262,13 @@ router.post('/', async (req,res) => {
           );
           retrieved = (out || []).map(r => ({ id: r.id, score: r.score, payload: r.payload }));
           
-          console.log(`[Chat] Retrieved ${retrieved.length} chunks for ${user.religion}/${deityGroup}`);
+          console.log(`[Chat] Retrieved ${retrieved.length} chunks for ${deityReligion}/${deityGroup}`);
         }catch(e){
           console.warn('[Chat] Retrieval failed, continuing without sacred text context:', e.message);
         }
       }
+    } else if (questionType.needsReference && !hasTextsInDatabase) {
+      console.log(`[Chat] Skipping retrieval for ${deityReligion} deity - texts not in database, using character knowledge only`);
     } else {
       console.log(`[Chat] Skipping retrieval for ${questionType.category} question`);
     }
@@ -354,34 +320,16 @@ router.post('/', async (req,res) => {
       // Different prompts based on question type
       if (questionType.needsReference && retrieved.length > 0) {
         // Spiritual/emotional question with references
-        contextInstruction = `Here are relevant teachings from sacred texts:
-${contextSnippets}
-
-Use these to provide wisdom and guidance.`;
-        
-        userPrompt = `"${text}"
-
-Respond as ${personaObj.name} in a warm, natural way:
-
-1. Give your wisdom (2-3 sentences, conversational and caring)
-2. Share a relevant teaching from the texts above
-3. End with one encouraging line
-
-Keep it natural and heartfelt, not formal.`;
+        contextInstruction = `Here are relevant teachings: ${contextSnippets}`;
+        userPrompt = `"${text}"\n\nRespond as ${personaObj.name}. Keep it short (1-2 sentences) and natural.`;
       } else if (questionType.needsReference && retrieved.length === 0) {
         // Spiritual question but no references found
-        contextInstruction = `No specific scripture available - speak from your wisdom and compassion as ${personaObj.name}.`;
-        
-        userPrompt = `"${text}"
-
-Respond as ${personaObj.name} with warmth and wisdom. Give caring advice in 2-3 sentences. Be natural and conversational.`;
+        contextInstruction = `Respond from your wisdom as ${personaObj.name}.`;
+        userPrompt = `"${text}"\n\nGive a short, caring response (1-2 sentences).`;
       } else {
         // Casual question - no references needed
-        contextInstruction = `This is a casual conversation. Respond naturally as ${personaObj.name} without using sacred texts.`;
-        
-        userPrompt = `"${text}"
-
-Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sentences) and conversational. No need for formal teachings or references.`;
+        contextInstruction = `This is casual conversation.`;
+        userPrompt = `"${text}"\n\nRespond naturally as ${personaObj.name}. Keep it brief and friendly.`;
       }
       
       const messages = [
@@ -410,13 +358,6 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
           );
           
           console.log(`[Intent] Response generated for ${intentClassification.intent}`);
-        }
-        // Use two-stage pipeline if enabled
-        else if (USE_TWO_STAGE_LLM) {
-          console.log('[Chat] Using Two-Stage LLM Pipeline (Thinker + Speaker)');
-          const result = await generateTwoStageResponse(text, contextSnippets, personaObj);
-          answer = result.finalResponse;
-          console.log(`[Chat] Pipeline timings - Thinker: ${result.timings.thinker}ms, Speaker: ${result.timings.speaker}ms, Total: ${result.timings.total}ms`);
         } else {
           // Standard single-stage approach
           completion = await chatCompletion(messages);
@@ -428,28 +369,59 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
       }
     }
 
-    // Format enhanced references
-    const { formatReferences, enhanceReferenceWithLLM } = require('../lib/referenceFormatter');
-    let enhancedReference = null;
+    // Humanize the response to make it natural and conversational
+    const { humanizeIfNeeded, extractSimpleCitation } = require('../lib/responseHumanizer');
+    const { enhanceRAGResponse } = require('../lib/responseStyler');
+    const { addEmotionalNarrationStructured } = require('../lib/emotionalNarratorStructured');
+    let simpleCitation = null;
     
     if (retrieved.length > 0) {
-      const retrievedTexts = retrieved.map(r => ({
-        text: r.payload.text,
-        source: r.payload.source_title || 'Sacred Text'
-      }));
+      const firstRef = retrieved[0];
+      const payload = firstRef.payload || {};
       
-      enhancedReference = formatReferences(retrievedTexts, text, intentClassification?.intent);
+      // Build simple source citation
+      let sourceTitle = payload.source_title || payload.file || payload.book;
       
-      // Enhance with LLM-generated meaning, application, and summary
-      if (enhancedReference) {
-        enhancedReference = await enhanceReferenceWithLLM(
-          enhancedReference,
-          text,
-          answer,
-          chatCompletion
-        );
+      if (sourceTitle && payload.chapter && payload.verse) {
+        simpleCitation = `${sourceTitle} ${payload.chapter}:${payload.verse}`;
+      } else if (sourceTitle && payload.chapter) {
+        simpleCitation = `${sourceTitle}, Chapter ${payload.chapter}`;
+      } else if (sourceTitle) {
+        simpleCitation = sourceTitle;
       }
+      
+      console.log(`[Chat] Simple citation: ${simpleCitation}`);
     }
+    
+    // Humanize the response to make it natural and conversational
+    const humanized = await humanizeIfNeeded(
+      answer,
+      text,
+      personaObj,
+      simpleCitation ? { source: simpleCitation } : null
+    );
+    
+    // Update answer with humanized version
+    answer = humanized.text;
+    simpleCitation = humanized.source;
+    
+    // Skip complex styling for more natural responses
+    console.log('[Styler] Using natural response without heavy styling');
+    
+    // Skip complex length control for more natural responses
+    console.log('[Length] Using natural response length');
+    
+    // Skip complex emotional narration for more natural responses
+    let emotionalResponse = {
+      tone: 'natural',
+      narration: 'conversational',
+      emotion_reason: 'simplified_response',
+      spoken_text: answer,
+      tts_text: answer,
+      citations: []
+    };
+    
+    console.log('[Emotion] Using simplified natural response format');
 
     // Generate speech if requested
     let audioUrl = null;
@@ -460,12 +432,15 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
         if (TTS_PROVIDER === 'google') {
           console.log('[TTS] Using Enhanced Google TTS (character-matched voices)');
           audioUrl = await googleTTS.generateSpeech(answer, persona);
-        } else if (TTS_PROVIDER === 'coqui') {
-          console.log('[TTS] Using Coqui TTS');
-          audioUrl = await coquiTTS.generateSpeech(answer, persona);
         } else if (TTS_PROVIDER === 'elevenlabs') {
-          console.log('[TTS] Using ElevenLabs TTS');
-          audioUrl = await generateElevenLabsSpeech(answer, persona);
+          console.log('[TTS] Using ElevenLabs TTS with emotional parameters');
+          // Use TTS-optimized text and emotional parameters
+          const ttsText = emotionalResponse.tts_text || answer;
+          const emotionalParams = {
+            tone: emotionalResponse.tone,
+            narration: emotionalResponse.narration
+          };
+          audioUrl = await generateElevenLabsSpeech(ttsText, persona, emotionalParams);
         }
         
         audioStatus = audioUrl ? 'success' : 'failed';
@@ -484,16 +459,20 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
         text: answer, 
         persona, 
         referencedSources: usedSources,
-        reference: enhancedReference,
+        reference: simpleCitation ? { source: simpleCitation } : null,
         audioUrl,
         audioStatus,
         timestamp: new Date() 
       };
 
       if(conversationId){
+        console.log(`[Chat] Persisting messages to conversation: ${conversationId}`);
+        
         // Check if this is the first message to set title
         const conv = await db.collection('conversations').findOne({ _id: conversationId });
         const isFirstMessage = !conv || !conv.messages || conv.messages.length === 0;
+        
+        console.log(`[Chat] Conversation exists: ${!!conv}, Is first message: ${isFirstMessage}`);
         
         const updateOps = {
           $push: { messages: { $each: [msg, reply] } },
@@ -503,20 +482,40 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
           }
         };
         
-        // Auto-generate title from first user message
+        // Auto-generate title from first user message and set userId
         if (isFirstMessage) {
           const title = text.length > 50 ? text.substring(0, 50) + '...' : text;
           updateOps.$set.title = title;
-          updateOps.$set.userId = user._id || null;
+          
+          // Set userId properly - use req.user.userId for authenticated users
+          if (req.user && req.user.userId) {
+            updateOps.$set.userId = req.user.userId;
+          } else {
+            updateOps.$set.userId = null; // Guest user
+          }
+          
+          console.log(`[Chat] Setting conversation title: "${title}" and userId: ${updateOps.$set.userId}`);
         }
         
-        await db.collection('conversations').updateOne(
+        const result = await db.collection('conversations').updateOne(
           { _id: conversationId },
-          updateOps
+          updateOps,
+          { upsert: true } // Create conversation if it doesn't exist
         );
+        
+        console.log(`[Chat] Database update result: matched=${result.matchedCount}, modified=${result.modifiedCount}, upserted=${result.upsertedCount}`);
+        
+        if (result.matchedCount === 0 && result.upsertedCount === 0) {
+          console.warn(`[Chat] Failed to update conversation ${conversationId} - conversation may not exist`);
+        } else {
+          console.log(`[Chat] Successfully persisted ${msg.text.length > 50 ? msg.text.substring(0, 50) + '...' : msg.text}`);
+        }
+      } else {
+        console.warn('[Chat] No conversationId provided - messages not persisted');
       }
     }catch(e){
-      console.warn('[Chat] DB persist failed', e.message);
+      console.error('[Chat] DB persist failed:', e.message);
+      console.error('[Chat] Full error:', e);
     }
 
     res.json({ 
@@ -524,10 +523,18 @@ Respond as ${personaObj.name} in a friendly, natural way. Keep it short (1-2 sen
         text: answer, 
         persona, 
         referencedSources: usedSources,
-        reference: enhancedReference,
+        reference: simpleCitation ? { source: simpleCitation } : null,
         audioUrl,
         audioStatus,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        // Enhanced emotional data for UI and TTS
+        emotion: emotionalResponse ? {
+          tone: emotionalResponse.tone,
+          narration: emotionalResponse.narration,
+          reason: emotionalResponse.emotion_reason,
+          tts_text: emotionalResponse.tts_text,
+          citations: emotionalResponse.citations
+        } : null
       } 
     });
 

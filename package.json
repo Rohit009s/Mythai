@@ -1,17 +1,21 @@
 {
   "dependencies": {
-    "@huggingface/inference": "^4.13.4",
-    "@qdrant/js-client-rest": "^1.16.1",
-    "@xenova/transformers": "^2.17.2",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "node-fetch": "^3.3.2",
-    "openai": "^6.9.1",
+    "nodemailer": "^7.0.11",
+    "openai": "^6.15.0",
+    "resend": "^6.6.0",
     "uuid": "^13.0.0"
+  },
+  "scripts": {
+    "test-gmail": "node scripts/test-gmail-smtp.js",
+    "test-gmail-otp": "node scripts/test-gmail-smtp.js --test-otp"
   }
 }
