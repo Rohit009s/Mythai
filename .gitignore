@@ -5,14 +5,17 @@ frontend/dist/
 
 # Environment variables (contains API keys and secrets)
 .env
-
+.kiro
 # IDE
 /.vscode/
 .idea/
-
+kiro/
 # Build outputs
 dist/
 build/
+data/voices
+data/texts
+docs
 
 # Embedding files (too large for Git - 164MB+)
 data/embeddings/*.json
@@ -44,19 +47,5 @@ tts-service/__pycache__/
 # Model cache
 .cache/
 models/
-# Frontend public folder (images, videos, large assets)
-frontend/public/
-
-# MCP Server
-mcp-server/
-
-# Server lib folder
-server/lib/
-
-# Scripts folder
-scripts/
-
-# TTS Service folder
-tts-service/
 
 
