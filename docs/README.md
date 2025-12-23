@@ -132,36 +132,8 @@ ELEVENLABS_API_KEY=sk_your_key_here
 
 For complete configuration options, see [Configuration Guide](./CONFIGURATION_GUIDE.md).
 
-## 🧪 Testing
 
-### Run Test Suite
 
-```bash
-# Unit tests
-npm test
-
-# Property-based tests
-npm test -- --testNamePattern="Property"
-
-# Integration tests
-npm test -- integration/
-
-# Coverage report
-npm run test:coverage
-```
-
-### Manual Testing
-
-```bash
-# Test MCP server
-node test-mcp-complete.js
-
-# Test pipeline
-node test-smart-pipeline.js
-
-# Test error handling
-node test-error-handler.js
-```
 
 ## 🚀 Deployment
 
@@ -347,27 +319,6 @@ This project is licensed under the MIT License. See [LICENSE](../LICENSE) for de
 
 ---
 
-## 📚 Additional Resources
-
-### External Documentation
-
-- [Hugging Face Inference API](https://huggingface.co/docs/api-inference)
-- [Qdrant Documentation](https://qdrant.tech/documentation/)
-- [ElevenLabs API Docs](https://docs.elevenlabs.io/)
-- [MongoDB Documentation](https://docs.mongodb.com/)
-
-### Community Resources
-
-- [GitHub Repository](https://github.com/your-repo)
-- [Discord Server](https://discord.gg/your-server)
-- [Developer Forum](https://forum.your-domain.com)
-- [Blog Posts](https://blog.your-domain.com)
-
-### Related Projects
-
-- [MCP SDK](https://github.com/modelcontextprotocol/sdk)
-- [Qdrant Client](https://github.com/qdrant/qdrant-js)
-- [Hugging Face Transformers](https://github.com/huggingface/transformers)
 
 ---
 
