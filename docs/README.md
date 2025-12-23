@@ -104,19 +104,7 @@ console.log(result.reply.text);
 console.log(`Processing time: ${result.reply.pipeline.timing.total}ms`);
 ```
 
-### MCP Tool Usage
 
-```javascript
-// Search sacred texts
-const searchResults = await fetch('/api/mcp/search-texts', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    query: "karma and dharma",
-    tradition: "hindu",
-    language: "en"
-  })
-});
 ```
 
 For complete API documentation, see [API Documentation](./API_DOCUMENTATION.md).
