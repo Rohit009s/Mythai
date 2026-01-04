@@ -120,22 +120,70 @@ async function chatCompletion(
     top_k: 50,
   };
 
-  const response = await makeRequest('/chat/completions', 'POST', body);
+  try {
+    const response = await makeRequest('/chat/completions', 'POST', body);
 
-  if (response.status !== 200) {
-    const errorMsg = response.rawData || JSON.stringify(response.data);
-    throw new Error(`Open Router chat failed: ${response.status} - ${errorMsg}`);
+    if (response.status !== 200) {
+      const errorMsg = response.rawData || JSON.stringify(response.data);
+      
+      // Check if it's a rate limit error
+      if (response.status === 429) {
+        console.warn('[Open Router] Rate limited, using fallback response');
+        return generateFallbackResponse(messages);
+      }
+      
+      throw new Error(`Open Router chat failed: ${response.status} - ${errorMsg}`);
+    }
+
+    // Format response to match OpenAI structure
+    return {
+      choices: [
+        {
+          message: {
+            content: response.data.choices[0].message.content,
+          },
+        },
+      ],
+    };
+  } catch (error) {
+    if (error.message.includes('429') || error.message.includes('rate-limited')) {
+      console.warn('[Open Router] Rate limited, using fallback response');
+      return generateFallbackResponse(messages);
+    }
+    throw error;
   }
+}
 
-  // Format response to match OpenAI structure
+/**
+ * Generate a fallback response when API is rate-limited
+ */
+function generateFallbackResponse(messages) {
+  const lastMessage = messages[messages.length - 1];
+  const userText = lastMessage.content.toLowerCase();
+  
+  // Simple pattern-based responses to demonstrate conversation continuity
+  let response = "I understand what you're sharing with me. ";
+  
+  if (userText.includes('thank') || userText.includes('advice')) {
+    response += "I'm glad my previous guidance was helpful. Let me continue to support you on this journey.";
+  } else if (userText.includes('stress') || userText.includes('work')) {
+    response += "Work stress is indeed challenging. Remember to find balance between your duties and inner peace.";
+  } else if (userText.includes('more') || userText.includes('tell me')) {
+    response += "Of course, I'm here to share more wisdom with you. What specific aspect would you like to explore further?";
+  } else if (userText.includes('hello') || userText.includes('hi')) {
+    response += "Welcome, my dear friend. I'm here to offer guidance and support. What brings you to me today?";
+  } else {
+    response += "I hear your words and feel your heart. Let me offer you some gentle guidance for your path forward.";
+  }
+  
   return {
     choices: [
       {
         message: {
-          content: response.data.choices[0].message.content,
-        },
-      },
-    ],
+          content: response + " (Note: Using fallback response due to API rate limiting)"
+        }
+      }
+    ]
   };
 }
 

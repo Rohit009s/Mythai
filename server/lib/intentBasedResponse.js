@@ -9,17 +9,34 @@ const { INTENTS } = require('./intentClassifier');
 /**
  * Generate response based on intent using configured LLM provider
  */
-async function generateIntentBasedResponse(userMessage, intent, persona, retrievedTexts = []) {
-  const template = getPromptTemplate(intent, persona, userMessage, retrievedTexts);
+async function generateIntentBasedResponse(userMessage, intent, persona, retrievedTexts = [], conversationHistory = []) {
+  const template = getPromptTemplate(intent, persona, userMessage, retrievedTexts, conversationHistory);
   
   try {
-    // Use the main OpenAI client which will route to the configured provider (OpenRouter, etc.)
-    const { chatCompletion } = require('./openaiClient');
+    // Use the main OpenRouter client which will route to the configured provider (OpenRouter, etc.)
+    const { chatCompletion } = require('./openRouterClient');
     
-    const response = await chatCompletion([
-      { role: 'system', content: template.systemPrompt },
-      { role: 'user', content: template.userPrompt }
-    ], undefined, template.temperature, template.maxTokens);
+    // Build messages array with conversation history
+    const messages = [
+      { role: 'system', content: template.systemPrompt }
+    ];
+
+    // Add conversation history for continuity
+    if (conversationHistory && conversationHistory.length > 0) {
+      console.log(`[Intent] Adding ${conversationHistory.length} messages to conversation history`);
+      conversationHistory.forEach(msg => {
+        if (msg.role === 'user') {
+          messages.push({ role: 'user', content: msg.text });
+        } else if (msg.role === 'assistant') {
+          messages.push({ role: 'assistant', content: msg.text });
+        }
+      });
+    }
+
+    // Add current user message
+    messages.push({ role: 'user', content: template.userPrompt });
+    
+    const response = await chatCompletion(messages, undefined, template.temperature, template.maxTokens);
     
     return response.choices[0].message.content.trim();
   } catch (error) {
@@ -31,25 +48,25 @@ async function generateIntentBasedResponse(userMessage, intent, persona, retriev
 /**
  * Get prompt template based on intent
  */
-function getPromptTemplate(intent, persona, userMessage, retrievedTexts) {
+function getPromptTemplate(intent, persona, userMessage, retrievedTexts, conversationHistory = []) {
   switch (intent) {
     case INTENTS.EMOTION_SUPPORT:
-      return getEmotionSupportTemplate(persona, userMessage, retrievedTexts);
+      return getEmotionSupportTemplate(persona, userMessage, retrievedTexts, conversationHistory);
     
     case INTENTS.SPIRITUAL_QUESTION:
-      return getSpiritualQuestionTemplate(persona, userMessage, retrievedTexts);
+      return getSpiritualQuestionTemplate(persona, userMessage, retrievedTexts, conversationHistory);
     
     case INTENTS.KNOWLEDGE_FACT:
-      return getKnowledgeFactTemplate(persona, userMessage, retrievedTexts);
+      return getKnowledgeFactTemplate(persona, userMessage, retrievedTexts, conversationHistory);
     
     case INTENTS.NORMAL_CHAT:
-      return getNormalChatTemplate(persona, userMessage);
+      return getNormalChatTemplate(persona, userMessage, conversationHistory);
     
     case INTENTS.TECH_OTHER:
-      return getTechOtherTemplate(persona, userMessage);
+      return getTechOtherTemplate(persona, userMessage, conversationHistory);
     
     default:
-      return getSpiritualQuestionTemplate(persona, userMessage, retrievedTexts);
+      return getSpiritualQuestionTemplate(persona, userMessage, retrievedTexts, conversationHistory);
   }
 }
 
@@ -57,10 +74,15 @@ function getPromptTemplate(intent, persona, userMessage, retrievedTexts) {
  * Template for emotional support
  * Format: Empathy + Advice + One Reference + One-liner with emoji
  */
-function getEmotionSupportTemplate(persona, userMessage, retrievedTexts) {
+function getEmotionSupportTemplate(persona, userMessage, retrievedTexts, conversationHistory = []) {
   const hasReference = retrievedTexts.length > 0;
+  const hasHistory = conversationHistory.length > 0;
   const referenceText = hasReference 
     ? `\n\nRelevant teaching: ${retrievedTexts[0].text}\nSource: ${retrievedTexts[0].source}`
+    : '';
+  
+  const continuityInstruction = hasHistory 
+    ? '\n\nIMPORTANT: This is an ongoing conversation. Reference previous topics naturally when relevant. Build upon what you\'ve discussed before.'
     : '';
   
   return {
@@ -72,6 +94,7 @@ CRITICAL RULES:
 - Be warm, caring, and empathetic
 - Keep paragraphs SHORT (2-4 lines each)
 - Sound like a real person, not a textbook
+${continuityInstruction}
 
 RESPONSE FORMAT (MUST FOLLOW EXACTLY):
 1. Empathy paragraph (2-4 short sentences) - Understand their feelings
@@ -90,7 +113,7 @@ Respond in this EXACT format:
 
 ${hasReference ? '📖 Reference: [Book name] – [Chapter/Section] (brief explanation in simple words)\n\n' : ''}✨ [One encouraging line]
 
-Use simple English. Be like a caring friend. Keep it natural and warm.`,
+Use simple English. Be like a caring friend. Keep it natural and warm.${hasHistory ? ' Reference our previous conversation naturally if relevant.' : ''}`,
     
     temperature: 0.7,
     maxTokens: 350

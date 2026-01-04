@@ -217,6 +217,16 @@ function generateOtpEmailTemplate(content) {
  */
 async function sendOtpEmail(email, name, otp) {
   try {
+    // 🚨 DEVELOPMENT: Display OTP in terminal for easy testing
+    console.log('\n' + '='.repeat(60));
+    console.log('🔐 OTP VERIFICATION CODE (DEVELOPMENT)');
+    console.log('='.repeat(60));
+    console.log(`📧 Email: ${email}`);
+    console.log(`👤 Name: ${name}`);
+    console.log(`🔢 OTP Code: ${otp}`);
+    console.log(`⏰ Expires: ${new Date(Date.now() + 10 * 60 * 1000).toLocaleString()}`);
+    console.log('='.repeat(60) + '\n');
+    
     const content = `
       <div class="greeting">Hello ${name}! 🙏</div>
       
@@ -250,11 +260,11 @@ async function sendOtpEmail(email, name, otp) {
       text: `Your ${EMAIL_CONFIG.appName} verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, please ignore this email.`
     });
     
-    console.log(`[OTP] Verification code sent to ${email}:`, result.data?.id);
+    console.log(`[OTP] ✅ Verification code sent to ${email}:`, result.data?.id);
     return { success: true, messageId: result.data?.id };
     
   } catch (error) {
-    console.error('[OTP] Failed to send verification email:', error);
+    console.error('[OTP] ❌ Failed to send verification email:', error);
     return { success: false, error: error.message };
   }
 }
@@ -264,6 +274,16 @@ async function sendOtpEmail(email, name, otp) {
  */
 async function sendPasswordResetOtp(email, name, otp) {
   try {
+    // 🚨 DEVELOPMENT: Display Password Reset OTP in terminal
+    console.log('\n' + '='.repeat(60));
+    console.log('🔐 PASSWORD RESET OTP (DEVELOPMENT)');
+    console.log('='.repeat(60));
+    console.log(`📧 Email: ${email}`);
+    console.log(`👤 Name: ${name}`);
+    console.log(`🔢 Reset Code: ${otp}`);
+    console.log(`⏰ Expires: ${new Date(Date.now() + 10 * 60 * 1000).toLocaleString()}`);
+    console.log('='.repeat(60) + '\n');
+    
     const content = `
       <div class="greeting">Password Reset Request</div>
       
@@ -295,11 +315,11 @@ async function sendPasswordResetOtp(email, name, otp) {
       text: `Your ${EMAIL_CONFIG.appName} password reset code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, please ignore this email.`
     });
     
-    console.log(`[OTP] Password reset code sent to ${email}:`, result.data?.id);
+    console.log(`[OTP] ✅ Password reset code sent to ${email}:`, result.data?.id);
     return { success: true, messageId: result.data?.id };
     
   } catch (error) {
-    console.error('[OTP] Failed to send password reset email:', error);
+    console.error('[OTP] ❌ Failed to send password reset email:', error);
     return { success: false, error: error.message };
   }
 }

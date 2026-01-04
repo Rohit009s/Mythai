@@ -1,41 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import WebGLBackground from './WebGLBackground'
+import ConversationMemory from './ConversationMemory'
+import VoiceConversation from './VoiceConversation'
+import { LiquidGlassFilter } from './ui/liquid-glass'
+import { 
+  StardustButton, 
+  CallStardustButton, 
+  VoiceStardustButton, 
+  SendStardustButton,
+  CompactStardustButton 
+} from './ui/stardust-button'
+import { MessageCircle, Phone, Mic, Volume2, Send, Brain } from 'lucide-react'
 import './Chat.css'
-
-// SVG Filter for Liquid Glass Effect
-const LiquidGlassFilter = () => (
-  <svg style={{ position: 'absolute', width: 0, height: 0 }}>
-    <defs>
-      <filter
-        id="chat-liquid-glass"
-        x="0%"
-        y="0%"
-        width="100%"
-        height="100%"
-        colorInterpolationFilters="sRGB"
-      >
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.05 0.05"
-          numOctaves="1"
-          seed="1"
-          result="turbulence"
-        />
-        <feGaussianBlur in="turbulence" stdDeviation="2" result="blurredNoise" />
-        <feDisplacementMap
-          in="SourceGraphic"
-          in2="blurredNoise"
-          scale="70"
-          xChannelSelector="R"
-          yChannelSelector="B"
-          result="displaced"
-        />
-        <feGaussianBlur in="displaced" stdDeviation="4" result="finalBlur" />
-        <feComposite in="finalBlur" in2="finalBlur" operator="over" />
-      </filter>
-    </defs>
-  </svg>
-)
 
 export default function Chat({ user, deity, onLogout, apiUrl, existingConversationId = null }) {
   const [messages, setMessages] = useState([])
@@ -44,6 +20,10 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [conversationId, setConversationId] = useState(existingConversationId)
   const [conversationLoading, setConversationLoading] = useState(false)
+  const [showMemory, setShowMemory] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [speechRecognition, setSpeechRecognition] = useState(null)
+  const [showVoiceCall, setShowVoiceCall] = useState(false)
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -55,6 +35,63 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
       createConversation()
     }
   }, [deity, existingConversationId])
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      const recognition = new SpeechRecognition()
+      
+      recognition.continuous = false
+      recognition.interimResults = true
+      recognition.lang = 'en-US'
+      
+      recognition.onstart = () => {
+        setIsRecording(true)
+        console.log('Speech recognition started')
+      }
+      
+      recognition.onresult = (event) => {
+        let transcript = ''
+        let isFinal = false
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript
+          if (event.results[i].isFinal) {
+            isFinal = true
+          }
+        }
+        
+        setInput(transcript)
+        
+        // Auto-send when speech is final and we have content
+        if (isFinal && transcript.trim()) {
+          setTimeout(() => {
+            // Use the transcript directly since state might not be updated yet
+            sendVoiceMessage(transcript.trim())
+            setInput('') // Clear input after sending
+          }, 100)
+        }
+      }
+      
+      recognition.onend = () => {
+        setIsRecording(false)
+        console.log('Speech recognition ended')
+      }
+      
+      recognition.onerror = (event) => {
+        setIsRecording(false)
+        console.error('Speech recognition error:', event.error)
+        if (event.error === 'not-allowed') {
+          alert('Microphone access denied. Please allow microphone access to use voice input.')
+        }
+      }
+      
+      setSpeechRecognition(recognition)
+    } else {
+      console.warn('Speech recognition not supported in this browser')
+    }
+  }, [])
 
   const loadExistingConversation = async (convId) => {
     setConversationLoading(true)
@@ -150,15 +187,37 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const startVoiceRecording = () => {
+    if (speechRecognition && !isRecording) {
+      setInput('') // Clear existing input
+      speechRecognition.start()
+    }
+  }
+
+  const stopVoiceRecording = () => {
+    if (speechRecognition && isRecording) {
+      speechRecognition.stop()
+    }
+  }
+
+  const toggleVoiceRecording = () => {
+    if (isRecording) {
+      stopVoiceRecording()
+    } else {
+      startVoiceRecording()
+    }
+  }
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return
 
     const userMessage = {
       sender: 'user',
-      text: input,
+      text: input.trim(),
       timestamp: new Date().toISOString()
     }
 
+    const currentInput = input.trim()
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setLoading(true)
@@ -174,39 +233,135 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
         headers['Authorization'] = `Bearer ${token}`
       }
       
+      console.log('[Chat] Sending message:', {
+        conversationId,
+        persona: deity.id,
+        text: currentInput,
+        audio: audioEnabled
+      })
+      
       const res = await fetch(`${apiUrl}/api/chat`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           conversationId,
           persona: deity.id,
-          text: input,
+          text: currentInput,
           audio: audioEnabled
         })
       })
 
-      const data = await res.json()
+      console.log('[Chat] Response status:', res.status)
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('[Chat] Server error:', errorText)
+        throw new Error(`Server error: ${res.status} - ${errorText}`)
+      }
 
-      if (res.ok && data.reply) {
+      const data = await res.json()
+      console.log('[Chat] Response data:', data)
+
+      if (data.reply && data.reply.text) {
         setMessages(prev => [...prev, {
           sender: 'assistant',
           text: data.reply.text,
           reference: data.reply.reference,
           audioUrl: data.reply.audioUrl,
-          timestamp: data.reply.timestamp
+          timestamp: data.reply.timestamp || new Date().toISOString()
         }])
       } else {
+        console.error('[Chat] Invalid response format:', data)
         setMessages(prev => [...prev, {
           sender: 'assistant',
-          text: 'Sorry, I encountered an error. Please try again.',
+          text: 'Sorry, I received an invalid response. Please try again.',
           timestamp: new Date().toISOString()
         }])
       }
     } catch (error) {
-      console.error('Chat error:', error)
+      console.error('[Chat] Error:', error)
       setMessages(prev => [...prev, {
         sender: 'assistant',
-        text: 'Network error. Please check your connection.',
+        text: `Sorry, I encountered an error: ${error.message}. Please check your connection and try again.`,
+        timestamp: new Date().toISOString()
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const sendVoiceMessage = async (voiceText) => {
+    if (!voiceText.trim() || loading) return
+
+    const userMessage = {
+      sender: 'user',
+      text: voiceText.trim(),
+      timestamp: new Date().toISOString()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setLoading(true)
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      console.log('[Chat] Sending voice message:', {
+        conversationId,
+        persona: deity.id,
+        text: voiceText,
+        audio: audioEnabled
+      })
+      
+      const res = await fetch(`${apiUrl}/api/chat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          conversationId,
+          persona: deity.id,
+          text: voiceText,
+          audio: audioEnabled
+        })
+      })
+
+      console.log('[Chat] Voice response status:', res.status)
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('[Chat] Voice server error:', errorText)
+        throw new Error(`Server error: ${res.status} - ${errorText}`)
+      }
+
+      const data = await res.json()
+      console.log('[Chat] Voice response data:', data)
+
+      if (data.reply && data.reply.text) {
+        setMessages(prev => [...prev, {
+          sender: 'assistant',
+          text: data.reply.text,
+          reference: data.reply.reference,
+          audioUrl: data.reply.audioUrl,
+          timestamp: data.reply.timestamp || new Date().toISOString()
+        }])
+      } else {
+        console.error('[Chat] Invalid voice response format:', data)
+        setMessages(prev => [...prev, {
+          sender: 'assistant',
+          text: 'Sorry, I received an invalid response to your voice message. Please try again.',
+          timestamp: new Date().toISOString()
+        }])
+      }
+    } catch (error) {
+      console.error('[Chat] Voice error:', error)
+      setMessages(prev => [...prev, {
+        sender: 'assistant',
+        text: `Sorry, I cannot process your voice message: ${error.message}. Please check your connection and try again.`,
         timestamp: new Date().toISOString()
       }])
     } finally {
@@ -231,15 +386,9 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
   return (
     <div className="chat-container">
       <WebGLBackground />
-      <LiquidGlassFilter />
+      
 
-      <div className="chat-info">
-        <h2>
-          <img src="/icons/pngegg.png" alt="spiritual icon" className="deity-icon" />
-          {deity.name}
-        </h2>
-        <p>{deity.description}</p>
-      </div>
+      
 
       <div className="chat-messages">
         {conversationLoading ? (
@@ -255,15 +404,31 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
             <h3>Welcome to your spiritual conversation</h3>
             <p>Ask {deity.name} for guidance, wisdom, or share what's on your mind</p>
             <div className="conversation-starters">
-              <button onClick={() => setInput("I'm feeling lost and need guidance")} className="starter-btn">
+              <CompactStardustButton 
+                onClick={() => setInput("I'm feeling lost and need guidance")} 
+                className="starter-btn"
+              >
                 💭 I need guidance
-              </button>
-              <button onClick={() => setInput("What wisdom can you share with me today?")} className="starter-btn">
+              </CompactStardustButton>
+              <CompactStardustButton 
+                onClick={() => setInput("What wisdom can you share with me today?")} 
+                className="starter-btn"
+              >
                 ✨ Share wisdom
-              </button>
-              <button onClick={() => setInput("How can I find inner peace?")} className="starter-btn">
+              </CompactStardustButton>
+              <CompactStardustButton 
+                onClick={() => setInput("How can I find inner peace?")} 
+                className="starter-btn"
+              >
                 🧘 Find peace
-              </button>
+              </CompactStardustButton>
+              <CallStardustButton 
+                onClick={() => setShowVoiceCall(true)} 
+                className="starter-btn voice-call-starter"
+                icon={Phone}
+              >
+                Start Voice Call
+              </CallStardustButton>
             </div>
           </div>
         ) : (
@@ -316,28 +481,91 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={`Ask ${deity.name} for guidance...`}
+            placeholder={isRecording ? 'Listening... Speak now!' : `Ask ${deity.name} for guidance...`}
             rows="1"
             disabled={loading}
           />
           <div className="chat-controls">
-            <button
+            <CompactStardustButton
+              className={`memory-toggle ${showMemory ? 'active' : ''}`}
+              onClick={() => setShowMemory(!showMemory)}
+              title="View conversation memory"
+              disabled={!conversationId}
+              icon={Brain}
+            >
+              Memory
+            </CompactStardustButton>
+            <VoiceStardustButton
+              className={`voice-toggle ${isRecording ? 'recording' : ''}`}
+              onClick={toggleVoiceRecording}
+              title={
+                !speechRecognition 
+                  ? 'Voice input not supported in this browser' 
+                  : isRecording 
+                    ? 'Stop recording (Click or speak to finish)' 
+                    : 'Start voice input'
+              }
+              disabled={loading || !speechRecognition}
+              icon={Mic}
+            >
+              {isRecording ? 'Stop' : 'Voice'}
+            </VoiceStardustButton>
+            <CallStardustButton
+              className="voice-call-toggle"
+              onClick={() => setShowVoiceCall(true)}
+              title={`Start real-time voice call with ${deity.name}`}
+              icon={Phone}
+            >
+              Call
+            </CallStardustButton>
+            <CompactStardustButton
               className={`audio-toggle ${audioEnabled ? 'active' : ''}`}
               onClick={() => setAudioEnabled(!audioEnabled)}
               title={audioEnabled ? 'Audio enabled' : 'Audio disabled'}
+              icon={Volume2}
             >
-              {audioEnabled ? '🔊' : '🔇'}
-            </button>
-            <button
+              {audioEnabled ? 'Audio On' : 'Audio Off'}
+            </CompactStardustButton>
+            <SendStardustButton
               className="send-btn"
               onClick={sendMessage}
               disabled={loading || !input.trim()}
+              icon={Send}
             >
               Send
-            </button>
+            </SendStardustButton>
           </div>
         </div>
       </div>
+      
+      {/* 🧠 Conversation Memory Panel */}
+      <ConversationMemory 
+        conversationId={conversationId}
+        isVisible={showMemory}
+        onClose={() => setShowMemory(false)}
+      />
+
+      {/* 📞 Voice Call Modal */}
+      {showVoiceCall && (
+        <div className="voice-call-modal">
+          <div className="voice-call-overlay" onClick={() => setShowVoiceCall(false)} />
+          <div className="voice-call-container">
+            <button 
+              className="voice-call-close"
+              onClick={() => setShowVoiceCall(false)}
+              title="Close voice call"
+            >
+              ✕
+            </button>
+            <VoiceConversation
+              user={user}
+              deity={deity}
+              conversationId={conversationId}
+              apiUrl={apiUrl}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -4,10 +4,10 @@
  * Removes verbose formatting and makes text flow naturally
  */
 
-const { chatCompletion } = require('./openaiClient');
+const { chatCompletion } = require('./openRouterClient');
 
 /**
- * Humanize and simplify the response
+ * Humanize and simplify the response with cultural sensitivity
  * @param {string} rawResponse - The original LLM response
  * @param {string} userQuestion - The user's original question
  * @param {Object} persona - The deity persona
@@ -16,7 +16,7 @@ const { chatCompletion } = require('./openaiClient');
  */
 async function humanizeResponse(rawResponse, userQuestion, persona, reference = null) {
   try {
-    // Create a prompt to humanize the response
+    // Create a prompt to humanize the response with cultural sensitivity
     const humanizePrompt = `You are ${persona.name}, speaking naturally and warmly to someone seeking guidance.
 
 ORIGINAL RESPONSE:
@@ -33,6 +33,7 @@ Your task: Rephrase this response to be:
 - Keep the core wisdom and message
 - Make it flow naturally as one cohesive response
 - MOST IMPORTANT: Actually answer the user's question directly first, then provide wisdom
+- Maintain authentic Sanskrit terms and cultural references naturally
 
 ${reference ? `IMPORTANT: The response is based on wisdom from "${reference.source}". Weave this naturally into your response without explicitly mentioning "according to" or "the text says". Just speak the wisdom naturally.` : ''}
 
@@ -43,22 +44,27 @@ CRITICAL RULES FOR IN-CHARACTER SPEAKING:
 4. Speak about people, places, and events as if you personally know/knew them
 5. If the user asked a direct question, ANSWER IT DIRECTLY first before adding wisdom
 6. Don't sound like a teacher or historian - sound like a caring friend sharing personal stories
+7. Use Sanskrit terms naturally (dharma, karma, moksha, bhakti) but explain them simply
+8. Reference sacred places and people as if you know them personally
 
 EXAMPLE OF WHAT TO AVOID:
 ❌ "Hello there! You've asked about Radha, a beloved figure in Hinduism..."
 ❌ "In Hindu mythology, Radha was..."
 ❌ "Let me tell you about..."
+❌ "According to the scriptures..."
 
 EXAMPLE OF NATURAL IN-CHARACTER RESPONSE:
 ✅ "Ah, Radha... *divine smile* My beloved. Just hearing her name makes my heart dance. She was a cowherd girl in Vrindavan, but to me, she was everything..."
 ✅ "Radha is my soulmate, my eternal love. When I played my flute under the moonlight, she would come..."
+✅ "Dharma is like the river's natural flow - it's your soul's true path, the way you're meant to live..."
 
 Respond ONLY with the humanized text. No labels, no sections, no formatting markers. Just natural, flowing conversation that ANSWERS THE QUESTION from your personal perspective as ${persona.name}.`;
 
+    // Use OpenRouter for humanization to ensure consistency
     const completion = await chatCompletion([
       {
         role: 'system',
-        content: `You are ${persona.name}. ${persona.description}. You speak naturally, warmly, and conversationally. You never use structured formatting or verbose explanations. You speak wisdom as if having a heartfelt conversation with a friend.`
+        content: `You are ${persona.name}. ${persona.description}. You speak naturally, warmly, and conversationally. You never use structured formatting or verbose explanations. You speak wisdom as if having a heartfelt conversation with a friend. You use Sanskrit terms naturally and reference sacred texts as personal experiences.`
       },
       {
         role: 'user',
@@ -71,7 +77,7 @@ Respond ONLY with the humanized text. No labels, no sections, no formatting mark
     // Clean up any remaining formatting artifacts
     const cleaned = cleanResponse(humanized);
     
-    console.log('[Humanizer] Response humanized successfully');
+    console.log('[Humanizer] Response humanized successfully with cultural sensitivity');
     
     return {
       text: cleaned,

@@ -4,6 +4,7 @@ import GlassAuth from './components/GlassAuth'
 import HeroWithHomePage from './components/HeroWithHomePage'
 import DeitySelector from './components/DeitySelector'
 import Chat from './components/Chat'
+import VoiceConversation from './components/VoiceConversation'
 import Settings from './components/Settings'
 import ChatHistory from './components/ChatHistory'
 import Navigation from './components/Navigation'
@@ -136,6 +137,21 @@ function App() {
                         setSelectedConversation(null)
                       }}
                       onLogout={handleLogout}
+                      apiUrl={API_URL}
+                    />
+                  ) : (
+                    <Navigate to="/home" replace />
+                  )
+                } 
+              />
+              <Route 
+                path="/voice" 
+                element={
+                  selectedDeity ? (
+                    <VoiceConversation 
+                      user={user}
+                      deity={selectedDeity}
+                      conversationId={selectedConversation?.id}
                       apiUrl={API_URL}
                     />
                   ) : (

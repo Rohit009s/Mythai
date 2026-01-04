@@ -5,8 +5,10 @@ const jwt = require('jsonwebtoken');
 const { ObjectId } = require('mongodb');
 const { getDb } = require('../db');
 const { getAllReligions } = require('../config/religionMapping');
-// Use hybrid email service - tries Gmail SMTP first, falls back to mock if blocked
-const { generateOtp, hashOtp, verifyOtp, isOtpExpired, sendOtpEmail, sendPasswordResetOtp, sendWelcomeEmail } = require('../lib/hybridEmailService');
+// Use OTP service for email verification
+const { generateOtp, hashOtp, verifyOtp, isOtpExpired, sendOtpEmail, sendPasswordResetOtp } = require('../lib/otpService');
+// Use email service for welcome emails
+const { sendWelcomeEmail } = require('../lib/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = '7d';
@@ -92,10 +94,11 @@ router.post('/register', async (req, res) => {
     const result = await users.insertOne(newUser);
 
     // Send OTP email
+    console.log(`[Auth] 📧 Sending OTP to ${email.toLowerCase()} for user: ${name}`);
     const emailResult = await sendOtpEmail(email.toLowerCase(), name, otp);
     
     if (!emailResult.success) {
-      console.error('[Auth] Failed to send OTP email:', emailResult.error);
+      console.error('[Auth] ❌ Failed to send OTP email:', emailResult.error);
       // Remove user if email failed
       await users.deleteOne({ _id: result.insertedId });
       return res.status(500).json({
@@ -104,7 +107,9 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    console.log(`[Auth] User registered and OTP sent to ${email}`);
+    console.log(`[Auth] ✅ User registered successfully! OTP sent to ${email}`);
+    console.log(`[Auth] 👤 User ID: ${result.insertedId}`);
+    console.log(`[Auth] 🔐 Check terminal above for OTP code!`);
 
     res.status(201).json({
       success: true,

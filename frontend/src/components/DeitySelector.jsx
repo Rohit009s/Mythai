@@ -6,7 +6,9 @@ import './DeitySelector.css'
 // Deity data mapped to religions with categories and images
 const DEITIES = {
   
+
   hinduism: [
+    
     { id: 'krishna', name: 'Krishna', description: 'Divine teacher of the Bhagavad Gita', category: 'Supreme', image: '/deities/krishna.png' },
     { id: 'shiva', name: 'Shiva', description: 'The transformer, lord of meditation', category: 'Trinity', image: '/deities/shiva.png' },
     { id: 'vishnu', name: 'Vishnu', description: 'The preserver, protector of dharma', category: 'Trinity', image: '/deities/vishnu.png' },
@@ -80,6 +82,7 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
   const [deities, setDeities] = useState([])
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [showSettings, setShowSettings] = useState(false)
   const canvasRef = useRef(null)
   const starsRef = useRef([])
   const animationRef = useRef(null)
@@ -88,6 +91,11 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
   const handleDeitySelect = (deity) => {
     onSelect(deity) // Set the selected deity in parent component
     navigate('/chat') // Navigate to chat page
+  }
+
+  const handleVoiceSelect = (deity) => {
+    onSelect(deity) // Set the selected deity in parent component
+    navigate('/voice') // Navigate to voice conversation page
   }
 
   useEffect(() => {
@@ -297,7 +305,6 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
                     <div 
                       key={deity.id} 
                       className="deity-card-bazaar"
-                      onClick={() => handleDeitySelect(deity)}
                     >
                       <div className="deity-image-wrapper-bazaar">
                         <img 
@@ -314,7 +321,22 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
                         <p className="deity-desc-bazaar">{deity.description}</p>
                         <div className="deity-footer-bazaar">
                           <span className="deity-category-badge">{deity.category}</span>
-                          <span className="deity-select-hint">Click to select →</span>
+                          <div className="deity-action-buttons">
+                            <button 
+                              className="deity-action-btn text-mode"
+                              onClick={() => handleDeitySelect(deity)}
+                              title="Text Conversation"
+                            >
+                              💬 Chat
+                            </button>
+                            <button 
+                              className="deity-action-btn voice-mode"
+                              onClick={() => handleVoiceSelect(deity)}
+                              title="Voice Conversation"
+                            >
+                              🎤 Voice
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -325,6 +347,32 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
           </>
         )}
       </div>
+      
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="settings-modal-overlay" onClick={() => setShowSettings(false)}>
+          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="close-settings"
+              onClick={() => setShowSettings(false)}
+            >
+              ×
+            </button>
+            <h3>Settings</h3>
+            <div className="settings-content">
+              <button onClick={() => navigate('/settings')}>
+                🔧 Full Settings
+              </button>
+              <button onClick={() => navigate('/history')}>
+                📚 Chat History
+              </button>
+              <button onClick={onLogout}>
+                🚪 Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

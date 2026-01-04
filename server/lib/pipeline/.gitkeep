@@ -1,7 +1,0 @@
-# Pipeline components will be implemented here
-# This directory will contain:
-# - PipelineOrchestrator.js
-# - ThinkerModel.js
-# - SpeakerModel.js
-# - EmbeddingsGenerator.js
-# - ErrorHandler.js

@@ -15,7 +15,6 @@ dist/
 build/
 data/voices
 data/texts
-docs
 
 # Embedding files (too large for Git - 164MB+)
 data/embeddings/*.json

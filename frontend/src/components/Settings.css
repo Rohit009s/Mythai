@@ -1,6 +1,14 @@
-.settings-container {
+/* Settings with WavyBackground Integration */
+.settings-wavy-bg {
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  width: 100%;
+}
+
+.settings-container {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8,14 +16,33 @@
 }
 
 .settings-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 25px;
   padding: 40px;
   width: 100%;
   max-width: 600px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  animation: settingsSlideIn 0.6s ease-out;
+}
+
+.settings-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .settings-header {
@@ -24,34 +51,38 @@
 }
 
 .settings-header h1 {
-  color: #333;
+  color: white;
   font-size: 2.5rem;
   margin-bottom: 10px;
   font-weight: 700;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .settings-header p {
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 1.1rem;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
 }
 
 .message {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 20px;
   font-weight: 500;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: rgba(34, 197, 94, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: rgba(239, 68, 68, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .settings-form {
@@ -68,32 +99,48 @@
 
 .form-group label {
   font-weight: 600;
-  color: #333;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.95rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .form-group input,
 .form-group select {
   padding: 12px 16px;
-  border: 2px solid #e1e5e9;
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
   font-size: 1rem;
   transition: all 0.3s ease;
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.form-group select option {
+  background: #1a1a2e;
+  color: white;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #FFD700;
+  border-color: rgba(255, 215, 0, 0.5);
+  background: rgba(255, 255, 255, 0.15);
   box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 .form-group input:disabled,
 .form-group select:disabled {
-  background-color: #f8f9fa;
-  color: #6c757d;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
   cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .form-actions {
@@ -105,71 +152,58 @@
 .edit-actions {
   display: flex;
   gap: 15px;
+  align-items: center;
 }
 
-.btn-primary,
-.btn-secondary,
-.btn-danger {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 120px;
+/* StardustButton Integration */
+.edit-profile-btn,
+.save-btn,
+.cancel-btn,
+.logout-btn {
+  min-width: 140px;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  color: #000;
-  font-weight: 600;
+.save-btn {
+  --primary: #d881ff !important;
+  --secondary: #b440ff !important;
 }
 
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(255, 215, 0, 0.4);
+.cancel-btn {
+  --primary: #ff6b6b !important;
+  --secondary: #ff4757 !important;
 }
 
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #5a6268;
-  transform: translateY(-2px);
-}
-
-.btn-danger {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #c82333;
-  transform: translateY(-2px);
-}
-
-.btn-primary:disabled,
-.btn-secondary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.logout-btn {
+  --primary: #ff6b6b !important;
+  --secondary: #ff4757 !important;
 }
 
 .danger-zone {
   margin-top: 40px;
   padding-top: 30px;
-  border-top: 2px solid #e1e5e9;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .danger-zone h3 {
-  color: #dc3545;
+  color: rgba(255, 107, 107, 0.9);
   margin-bottom: 15px;
   font-size: 1.2rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* Animation for settings card entrance */
+@keyframes settingsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .settings-container {
     padding: 10px;
@@ -177,6 +211,7 @@
   
   .settings-card {
     padding: 30px 20px;
+    margin: 10px;
   }
   
   .settings-header h1 {
@@ -185,5 +220,13 @@
   
   .edit-actions {
     flex-direction: column;
+    gap: 10px;
+  }
+
+  .edit-profile-btn,
+  .save-btn,
+  .cancel-btn,
+  .logout-btn {
+    min-width: 120px;
   }
 }

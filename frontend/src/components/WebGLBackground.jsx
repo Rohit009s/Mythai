@@ -66,12 +66,12 @@ export default function WebGLBackground() {
       }
 
       const position = [
-        -1.0, -1.0, 0.0,
-         1.0, -1.0, 0.0,
-        -1.0,  1.0, 0.0,
-         1.0, -1.0, 0.0,
-        -1.0,  1.0, 0.0,
-         1.0,  1.0, 0.0,
+        -1.1, -1.0, -1.0,
+         1.1, -1.0, -1.0,
+        -1.1,  1.0, -1.0,
+         1.1, -1.0, -1.0,
+        -1.1,  1.0, -1.0,
+         1.1,  1.0, -1.0,
       ]
 
       const positions = new THREE.BufferAttribute(new Float32Array(position), 3)

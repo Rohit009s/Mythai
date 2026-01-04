@@ -3,7 +3,7 @@
  * Uses LLM to intelligently classify user intent and decide RAG usage
  */
 
-const { chatCompletion } = require('./openaiClient');
+const { chatCompletion } = require('./openRouterClient');
 
 /**
  * Intent types
@@ -49,8 +49,8 @@ Reply ONLY with valid JSON (no markdown, no explanation):
 {"intent":"CATEGORY_NAME","use_scripture_rag":true/false,"confidence":"high/medium/low"}`;
 
   try {
-    // Use the main OpenAI client which will route to the configured provider
-    const { chatCompletion } = require('./openaiClient');
+    // Use the main OpenRouter client which will route to the configured provider
+    const { chatCompletion } = require('./openRouterClient');
     
     const response = await chatCompletion([
       { role: 'system', content: 'You are a classification system. Reply ONLY with JSON.' },

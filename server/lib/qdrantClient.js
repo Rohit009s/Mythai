@@ -1,28 +1,11 @@
 // Qdrant Client Router
-// Routes requests to cloud, FAISS, or mock based on configuration
-// Priority: FAISS (free, local) > Qdrant Cloud > Mock
+// Routes requests to cloud or mock based on configuration
+// Priority: Qdrant Cloud > Mock (removed FAISS and Hugging Face dependencies)
 
 require('dotenv').config();
 
 const qdrantCloud = require('./qdrantCloud');
 let mockDb = {}; // in-memory fallback
-let faissClient = null;
-
-// Check if FAISS is available
-const USE_FAISS = process.env.USE_FAISS !== 'false'; // Default to true
-try {
-  if (USE_FAISS) {
-    faissClient = require('./faissClient');
-    if (faissClient.isAvailable()) {
-      console.log('[Qdrant] Using FAISS for vector storage');
-    } else {
-      faissClient = null;
-    }
-  }
-} catch (e) {
-  console.warn('[Qdrant] FAISS not available, using fallback');
-  faissClient = null;
-}
 
 // On startup, try to load any precomputed embeddings from disk into mockDb
 try{
@@ -98,24 +81,7 @@ async function upsertPoints(collectionName, points){
 }
 
 async function search(collectionName, vector, topK=4, filters=null){
-  // Try FAISS first (free, local, fast)
-  if(faissClient){
-    try{
-      const faissRes = await faissClient.search(vector, topK);
-      if(faissRes && faissRes.length) {
-        console.log(`[Qdrant] FAISS returned ${faissRes.length} results`);
-        // Apply filters if provided
-        if(filters){
-          return applyFilters(faissRes, filters);
-        }
-        return faissRes;
-      }
-    }catch(e){
-      console.warn('[Qdrant] FAISS search error, falling back:', e.message);
-    }
-  }
-  
-  // Try Qdrant Cloud
+  // Try Qdrant Cloud first
   if(IS_CLOUD){
     try{
       const cloudRes = await qdrantCloud.searchVectors(vector, topK, filters);
@@ -170,13 +136,6 @@ function matchesFilters(payload, filters){
   }
   
   return true;
-}
-
-/**
- * Apply filters to search results
- */
-function applyFilters(results, filters){
-  return results.filter(r => matchesFilters(r.payload, filters));
 }
 
 async function getInfo(){

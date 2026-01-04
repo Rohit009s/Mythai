@@ -1,15 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { embedText, chatCompletion, moderate, DEMO_MODE } = require('../lib/openaiClient');
+const { embedText, chatCompletion, moderate, DEMO_MODE } = require('../lib/openRouterClient');
 const { search } = require('../lib/qdrantClient');
 const { generateSpeech: generateElevenLabsSpeech } = require('../lib/elevenLabsClient');
-const googleTTS = require('../lib/googleTTSClient');
+// const googleTTS = require('../lib/googleTTSClient');
 const { getDb } = require('../db');
 const { getMCPClient } = require('../lib/mcpClient');
 const { classifyQuestion } = require('../lib/questionClassifier');
 const { classifyIntent } = require('../lib/intentClassifier');
 const { generateIntentBasedResponse } = require('../lib/intentBasedResponse');
-const { detectLanguage, getPersonaSuffix, getLanguageInstruction } = require('../lib/languageDetector');
+// const { detectLanguage, getPersonaSuffix, getLanguageInstruction } = require('../lib/languageDetector');
+const responseAdaptation = require('../lib/responseAdaptation');
+const smartResponseController = require('../lib/smartResponseController');
+const conversationMemory = require('../lib/conversationMemory');
+const EnhancedLLMManager = require('../lib/enhancedLLMManager'); // NEW: Enhanced LLM with Sarvam AI
 const fs = require('fs');
 const path = require('path');
 const { 
@@ -25,6 +29,10 @@ const TTS_PROVIDER = process.env.TTS_PROVIDER || 'google';
 const TOP_K = parseInt(process.env.RETRIEVE_TOP_K || '4', 10);
 const USE_MCP = process.env.USE_MCP !== 'false'; // Enable MCP by default
 const USE_INTENT_LAYER = process.env.USE_INTENT_LAYER !== 'false'; // Intent-based classification (default: enabled)
+
+// Initialize Enhanced LLM Manager with Sarvam AI primary + OpenRouter fallback
+const enhancedLLM = new EnhancedLLMManager();
+console.log('[Chat] Enhanced LLM Manager initialized with Sarvam AI primary provider');
 
 async function loadPersona(personaName){
   // Try MCP first if enabled
@@ -99,11 +107,74 @@ ${user.age < 18 ? 'User is under 18 - use gentle, age-appropriate language.' : '
 Remember: Short, warm, natural responses only. Like texting a wise friend.`;
 }
 
-router.post('/', async (req,res) => {
-  const { conversationId, persona='krishna', text, audio=false } = req.body;
+/**
+ * 🧠 ENHANCED: Build system prompt with memory context and adaptive responses
+ */
+function buildEnhancedPersonalizedPrompt(persona, personaObj, user, deityBooks, toneGuidance, memoryContext, questionAnalysis) {
+  const basePersonality = personaObj.style || '';
   
-  if(!text) {
-    return res.status(400).json({ error: 'text required' });
+  // Get adaptive prompt based on question complexity
+  const adaptivePrompt = responseAdaptation.generateAdaptivePrompt(
+    persona, 
+    questionAnalysis.responseStyle, 
+    questionAnalysis
+  );
+  
+  // Build conversation context - ALWAYS include for continuity
+  let conversationContext = '';
+  if (memoryContext.conversationSummary) {
+    conversationContext = `\nCONVERSATION BACKGROUND: ${memoryContext.conversationSummary}`;
+  }
+  
+  // Build user memory context - Include for guidance questions
+  let userMemoryContext = '';
+  if (questionAnalysis.responseStyle === 'full_guidance' && memoryContext.userMemories && memoryContext.userMemories.length > 0) {
+    const importantMemories = memoryContext.userMemories
+      .slice(0, 2) // Top 2 most important memories
+      .map(m => `- ${m.content}`)
+      .join('\n');
+    
+    userMemoryContext = `\nUSER BACKGROUND:\n${importantMemories}`;
+  }
+  
+  // Add length guidance
+  const lengthGuidance = responseAdaptation.addLengthGuidance(questionAnalysis.responseStyle);
+  
+  // Avoid formulaic endings for simple questions
+  const avoidFormulaic = responseAdaptation.shouldAvoidFormulaic(questionAnalysis.responseStyle);
+  const formularicWarning = avoidFormulaic ? 
+    '\nIMPORTANT: Do NOT add philosophical endings or formulaic phrases unless the question specifically asks for wisdom or guidance. Keep it natural and conversational.' : '';
+  
+  // Add continuity instruction - this is key for story-like conversations
+  const continuityInstruction = `
+CRITICAL: This is an ongoing conversation. The conversation history will be provided in the messages above. 
+- Reference previous topics naturally when relevant
+- Build upon what you've discussed before
+- Maintain emotional continuity from previous exchanges
+- Create a flowing, story-like dialogue
+- Remember what the user has shared and acknowledge it appropriately`;
+  
+  return `${adaptivePrompt}
+
+${user.age < 18 ? 'User is under 18 - use gentle, age-appropriate language.' : ''}
+
+RESPONSE STYLE: ${lengthGuidance}
+${formularicWarning}
+${continuityInstruction}
+${conversationContext}
+${userMemoryContext}
+
+Remember: You have access to the full conversation history above. Use it to maintain natural continuity and create meaningful, connected responses.`;
+}
+
+router.post('/', async (req,res) => {
+  const { conversationId, persona='krishna', text, message, audio=false } = req.body;
+  const userMessage = text || message; // Support both 'text' and 'message' fields
+  
+  console.log(`[Chat] New request - conversationId: ${conversationId}, persona: ${persona}, text: "${userMessage ? userMessage.substring(0, 50) : 'undefined'}..."`);
+  
+  if(!userMessage) {
+    return res.status(400).json({ error: 'text or message required' });
   }
 
   try {
@@ -169,7 +240,7 @@ router.post('/', async (req,res) => {
     // Moderation (skip in demo mode or if it fails)
     if(!DEMO_MODE){
       try {
-        const mod = await moderate(text);
+        const mod = await moderate(userMessage);
         if(mod && mod.results && mod.results[0] && mod.results[0].categories){
           const flagged = mod.results[0].flagged;
           if(flagged){
@@ -195,7 +266,7 @@ router.post('/', async (req,res) => {
     
     if (USE_INTENT_LAYER) {
       // LLM-based intent classification
-      intentClassification = await classifyIntent(text);
+      intentClassification = await classifyIntent(userMessage);
       console.log(`[Intent] ${intentClassification.intent} (RAG: ${intentClassification.useScriptureRAG}, confidence: ${intentClassification.confidence})`);
       
       // Convert to questionType format for compatibility
@@ -205,72 +276,8 @@ router.post('/', async (req,res) => {
       };
     } else {
       // Fallback to keyword-based classification
-      questionType = classifyQuestion(text);
+      questionType = classifyQuestion(userMessage);
       console.log(`[Chat] Question classified as: ${questionType.category} (needsReference: ${questionType.needsReference})`);
-    }
-    
-    // Embed query and retrieve (only if question needs references)
-    let retrieved = [];
-    
-    // Check if deity has texts available in the database
-    const deityReligion = getDeityReligion(basePersona);
-    const hasTextsInDatabase = ['hinduism', 'christianity', 'islam'].includes(deityReligion);
-    
-    if (questionType.needsReference && hasTextsInDatabase) {
-      // Try MCP search first if enabled
-      if (USE_MCP) {
-        try {
-          const mcpClient = await getMCPClient();
-          if (mcpClient.isAvailable()) {
-            const mcpResults = await mcpClient.searchSacredTexts(text, user.religion, 'en');
-            if (mcpResults && mcpResults.length > 0) {
-              retrieved = mcpResults.map(r => ({
-                id: `mcp-${r.line}`,
-                score: 0.9,
-                payload: {
-                  text: r.text,
-                  source_title: r.file,
-                  context: r.context
-                }
-              }));
-              console.log(`[MCP] Retrieved ${retrieved.length} chunks via MCP`);
-            }
-          }
-        } catch (mcpError) {
-          console.warn('[MCP] Search failed, falling back to Qdrant:', mcpError.message);
-        }
-      }
-      
-      // Fallback to Qdrant if MCP didn't return results
-      if (retrieved.length === 0) {
-        try{
-          const queryVec = await embedText(text);
-          
-          // For guest users (religion: 'all'), don't apply filters - search all embeddings
-          // UPDATED: Use deity's religion for filtering, not user's religion
-          const filters = (user.religion === 'all' || !deityReligion) ? null : {
-            religion: deityReligion,
-            deity_group: deityGroup,
-            books: deityBooks
-          };
-          
-          const out = await search(
-            process.env.QDRANT_COLLECTION || 'myth_texts', 
-            queryVec, 
-            TOP_K,
-            filters
-          );
-          retrieved = (out || []).map(r => ({ id: r.id, score: r.score, payload: r.payload }));
-          
-          console.log(`[Chat] Retrieved ${retrieved.length} chunks for ${deityReligion}/${deityGroup}`);
-        }catch(e){
-          console.warn('[Chat] Retrieval failed, continuing without sacred text context:', e.message);
-        }
-      }
-    } else if (questionType.needsReference && !hasTextsInDatabase) {
-      console.log(`[Chat] Skipping retrieval for ${deityReligion} deity - texts not in database, using character knowledge only`);
-    } else {
-      console.log(`[Chat] Skipping retrieval for ${questionType.category} question`);
     }
 
     // Load persona (now async with MCP support)
@@ -279,17 +286,52 @@ router.post('/', async (req,res) => {
       return res.status(404).json({ error: `Persona ${persona} not found` });
     }
 
+    // 🧠 BUILD ENHANCED CONTEXT using layered memory system
+    console.log(`[Memory] Building context for conversationId: ${conversationId}, userId: ${req.user?.userId || 'null'}`);
+    
+    const memoryContext = await conversationMemory.buildContext(
+      conversationId, 
+      req.user?.userId || null
+    );
+
+    console.log(`[Memory] Context built - Summary: ${memoryContext.conversationSummary ? 'Yes' : 'No'}, Recent messages: ${memoryContext.recentMessages?.length || 0}, User memories: ${memoryContext.userMemories?.length || 0}`);
+    
+    // Debug: Log recent messages if any
+    if (memoryContext.recentMessages && memoryContext.recentMessages.length > 0) {
+      console.log(`[Memory] Recent messages found:`);
+      memoryContext.recentMessages.forEach((msg, i) => {
+        console.log(`  ${i + 1}. ${msg.role}: "${msg.text.substring(0, 50)}..."`);
+      });
+    } else {
+      console.log(`[Memory] No recent messages found for conversation ${conversationId}`);
+    }
+
+    // 🎯 ANALYZE QUESTION for adaptive responses
+    const questionAnalysis = responseAdaptation.analyzeQuestion(userMessage);
+    console.log(`[Adaptive] Question analysis: ${questionAnalysis.responseStyle} (complexity: ${questionAnalysis.complexity})`);
+
+    // 🧠 SMART RESPONSE ANALYSIS for length and style control
+    const smartAnalysis = smartResponseController.analyzeMessage(userMessage);
+    console.log(`[Smart] Response style: ${smartAnalysis.responseStyle} (${smartAnalysis.wordCount} words, max tokens: ${smartAnalysis.maxTokens})`);
+
     // Get age-appropriate tone
     const toneGuidance = getAgeAppropriateTone(user.age);
 
-    // Build personalized system prompt
-    const systemPrompt = buildPersonalizedPrompt(
+    // Build enhanced system prompt with memory context and adaptive responses
+    const systemPrompt = buildEnhancedPersonalizedPrompt(
       basePersona,
       personaObj,
       user,
       deityBooks,
-      toneGuidance
+      toneGuidance,
+      memoryContext,
+      questionAnalysis
     );
+
+    console.log(`[Memory] System prompt includes: ${memoryContext.conversationSummary ? 'conversation summary, ' : ''}${memoryContext.recentMessages?.length > 0 ? 'recent messages, ' : ''}${memoryContext.userMemories?.length > 0 ? 'user memories' : 'no additional context'}`);
+
+    // Initialize retrieved array for RAG results
+    let retrieved = [];
 
     // Build context from retrieved chunks
     let answer = null;
@@ -297,7 +339,7 @@ router.post('/', async (req,res) => {
     
     if(retrieved && retrieved.length > 0){
       // Try to find direct match
-      const userQuery = text.toLowerCase().replace(/["'`]/g, '');
+      const userQuery = userMessage.toLowerCase().replace(/["'`]/g, '');
       for(const r of retrieved){
         if(!r.payload || !r.payload.text) continue;
         const snippetLower = r.payload.text.toLowerCase();
@@ -332,17 +374,38 @@ router.post('/', async (req,res) => {
         userPrompt = `"${text}"\n\nRespond naturally as ${personaObj.name}. Keep it brief and friendly.`;
       }
       
+      // 🧠 BUILD CONVERSATION HISTORY for LLM context
       const messages = [
         { role: 'system', content: systemPrompt },
-        { role: 'system', content: contextInstruction },
-        { role: 'user', content: userPrompt }
+        { role: 'system', content: contextInstruction }
       ];
+
+      // Add recent conversation history to maintain continuity
+      if (memoryContext.recentMessages && memoryContext.recentMessages.length > 0) {
+        console.log(`[Memory] Adding ${memoryContext.recentMessages.length} recent messages to LLM context`);
+        
+        // Add recent messages as conversation history
+        memoryContext.recentMessages.forEach((msg, index) => {
+          if (msg.role === 'user') {
+            messages.push({ role: 'user', content: msg.text });
+            console.log(`[Memory] Added user message ${index + 1}: "${msg.text.substring(0, 50)}..."`);
+          } else if (msg.role === 'assistant') {
+            messages.push({ role: 'assistant', content: msg.text });
+            console.log(`[Memory] Added assistant message ${index + 1}: "${msg.text.substring(0, 50)}..."`);
+          }
+        });
+      }
+
+      // Add current user message
+      messages.push({ role: 'user', content: userPrompt });
+      
+      console.log(`[Memory] Final message array has ${messages.length} messages total`);
 
       let completion;
       try{
         // Use Intent-Based Response if enabled
         if (USE_INTENT_LAYER && intentClassification) {
-          console.log('[Intent] Generating intent-based response');
+          console.log('[Intent] Generating intent-based response with conversation history');
           
           // Prepare retrieved texts in simple format
           const retrievedTexts = retrieved.map(r => ({
@@ -350,18 +413,43 @@ router.post('/', async (req,res) => {
             source: r.payload.source_title || 'Sacred Text'
           }));
           
+          // Pass conversation history to intent-based response
           answer = await generateIntentBasedResponse(
-            text,
+            userMessage,
             intentClassification.intent,
             personaObj,
-            retrievedTexts
+            retrievedTexts,
+            memoryContext.recentMessages || [] // Add conversation history
           );
           
-          console.log(`[Intent] Response generated for ${intentClassification.intent}`);
+          console.log(`[Intent] Response generated for ${intentClassification.intent} with ${memoryContext.recentMessages?.length || 0} previous messages`);
         } else {
-          // Standard single-stage approach
-          completion = await chatCompletion(messages);
-          answer = (completion && completion.choices && completion.choices[0] && completion.choices[0].message && completion.choices[0].message.content) || 'No answer from model';
+          // Enhanced LLM approach with Sarvam AI primary + OpenRouter fallback
+          console.log(`[Chat] Using Enhanced LLM Manager (Sarvam AI primary) for ${persona}`);
+          
+          // Prepare retrieved texts in simple format
+          const retrievedTexts = retrieved.map(r => ({
+            text: r.payload.text,
+            source: r.payload.source_title || 'Sacred Text'
+          }));
+          
+          const llmResult = await enhancedLLM.generateSpiritualResponse(userMessage, persona, {
+            language: user.language || 'en',
+            context: retrievedTexts,
+            memoryContext: memoryContext.recentMessages || [],
+            temperature: smartAnalysis.responseStyle === 'crispy' ? 0.7 : 0.8,
+            max_tokens: smartAnalysis.maxTokens,
+            systemPrompt: smartResponseController.generateSmartPrompt(persona, smartAnalysis, userMessage)
+          });
+          
+          if (llmResult.success) {
+            answer = llmResult.response;
+            console.log(`[Chat] ✅ Response generated with ${llmResult.provider} (${llmResult.duration}ms, Cultural Score: ${Math.round(llmResult.culturalScore)}%)`);
+          } else {
+            console.error(`[Chat] ❌ Enhanced LLM failed:`, llmResult.error);
+            // Use fallback response
+            answer = llmResult.fallbackResponse || 'I apologize, but I am unable to respond at this moment. Please try again.';
+          }
         }
       }catch(e){
         console.error('[Chat] LLM error', e.message);
@@ -394,9 +482,12 @@ router.post('/', async (req,res) => {
     }
     
     // Humanize the response to make it natural and conversational
+    const shouldUseEnhancedHumanization = smartResponseController.shouldUseEnhancedHumanization(smartAnalysis);
+    console.log(`[Humanizer] Using ${shouldUseEnhancedHumanization ? 'enhanced' : 'standard'} humanization for ${smartAnalysis.responseStyle} response`);
+    
     const humanized = await humanizeIfNeeded(
       answer,
-      text,
+      userMessage,
       personaObj,
       simpleCitation ? { source: simpleCitation } : null
     );
@@ -430,8 +521,8 @@ router.post('/', async (req,res) => {
       audioStatus = 'pending';
       try {
         if (TTS_PROVIDER === 'google') {
-          console.log('[TTS] Using Enhanced Google TTS (character-matched voices)');
-          audioUrl = await googleTTS.generateSpeech(answer, persona);
+          console.log('[TTS] Google TTS temporarily disabled');
+          // audioUrl = await googleTTS.generateSpeech(answer, persona);
         } else if (TTS_PROVIDER === 'elevenlabs') {
           console.log('[TTS] Using ElevenLabs TTS with emotional parameters');
           // Use TTS-optimized text and emotional parameters
@@ -450,32 +541,50 @@ router.post('/', async (req,res) => {
       }
     }
 
-    // Persist to DB
-    try{
-      const db = getDb();
-      const msg = { sender: 'user', text, timestamp: new Date() };
-      const reply = { 
-        sender: 'assistant', 
-        text: answer, 
-        persona, 
-        referencedSources: usedSources,
-        reference: simpleCitation ? { source: simpleCitation } : null,
-        audioUrl,
-        audioStatus,
-        timestamp: new Date() 
-      };
-
-      if(conversationId){
-        console.log(`[Chat] Persisting messages to conversation: ${conversationId}`);
+    // 🧠 ENHANCED MEMORY SYSTEM: Use layered conversation memory
+    try {
+      if (conversationId) {
+        console.log(`[Memory] Storing messages with enhanced memory system: ${conversationId}`);
         
-        // Check if this is the first message to set title
+        // Extract metadata for memory system
+        const userMetadata = {
+          emotion: intentClassification?.emotion || null,
+          topic: intentClassification?.intent || questionType?.category || null,
+          needsReference: questionType?.needsReference || false
+        };
+
+        const assistantMetadata = {
+          persona: basePersona,
+          referencedSources: usedSources,
+          reference: simpleCitation ? { source: simpleCitation } : null,
+          audioUrl,
+          audioStatus,
+          hasAudio: !!audioUrl
+        };
+
+        // Store messages using memory system
+        await conversationMemory.addMessage(conversationId, 'user', userMessage, userMetadata);
+        await conversationMemory.addMessage(conversationId, 'assistant', answer, assistantMetadata);
+
+        // Store important user memories if this is a meaningful conversation
+        if (req.user?.userId && (questionType?.needsReference || intentClassification?.confidence > 0.7)) {
+          // Store user preferences or patterns
+          if (intentClassification?.intent === 'spiritual_guidance') {
+            await conversationMemory.storeUserMemory(
+              req.user.userId, 
+              conversationId, 
+              'spiritual_pattern', 
+              `Seeks ${basePersona} guidance about ${intentClassification.topic || 'spiritual matters'}`
+            );
+          }
+        }
+
+        // Legacy: Also update conversation for backward compatibility
+        const db = getDb();
         const conv = await db.collection('conversations').findOne({ _id: conversationId });
         const isFirstMessage = !conv || !conv.messages || conv.messages.length === 0;
         
-        console.log(`[Chat] Conversation exists: ${!!conv}, Is first message: ${isFirstMessage}`);
-        
         const updateOps = {
-          $push: { messages: { $each: [msg, reply] } },
           $set: { 
             updatedAt: new Date(),
             persona: basePersona
@@ -484,38 +593,31 @@ router.post('/', async (req,res) => {
         
         // Auto-generate title from first user message and set userId
         if (isFirstMessage) {
-          const title = text.length > 50 ? text.substring(0, 50) + '...' : text;
+          const title = userMessage.length > 50 ? userMessage.substring(0, 50) + '...' : userMessage;
           updateOps.$set.title = title;
           
-          // Set userId properly - use req.user.userId for authenticated users
           if (req.user && req.user.userId) {
             updateOps.$set.userId = req.user.userId;
           } else {
-            updateOps.$set.userId = null; // Guest user
+            updateOps.$set.userId = null;
           }
           
-          console.log(`[Chat] Setting conversation title: "${title}" and userId: ${updateOps.$set.userId}`);
+          console.log(`[Memory] Setting conversation title: "${title}"`);
         }
         
-        const result = await db.collection('conversations').updateOne(
+        await db.collection('conversations').updateOne(
           { _id: conversationId },
           updateOps,
-          { upsert: true } // Create conversation if it doesn't exist
+          { upsert: true }
         );
         
-        console.log(`[Chat] Database update result: matched=${result.matchedCount}, modified=${result.modifiedCount}, upserted=${result.upsertedCount}`);
-        
-        if (result.matchedCount === 0 && result.upsertedCount === 0) {
-          console.warn(`[Chat] Failed to update conversation ${conversationId} - conversation may not exist`);
-        } else {
-          console.log(`[Chat] Successfully persisted ${msg.text.length > 50 ? msg.text.substring(0, 50) + '...' : msg.text}`);
-        }
+        console.log(`[Memory] Successfully stored conversation with enhanced memory system`);
       } else {
-        console.warn('[Chat] No conversationId provided - messages not persisted');
+        console.warn('[Memory] No conversationId provided - messages not persisted');
       }
-    }catch(e){
-      console.error('[Chat] DB persist failed:', e.message);
-      console.error('[Chat] Full error:', e);
+    } catch (e) {
+      console.error('[Memory] Enhanced memory storage failed:', e.message);
+      console.error('[Memory] Full error:', e);
     }
 
     res.json({ 
@@ -545,3 +647,43 @@ router.post('/', async (req,res) => {
 });
 
 module.exports = router;
+/**
+ * GET /api/chat/llm-stats
+ * Get LLM provider statistics and performance metrics
+ */
+router.get('/llm-stats', async (req, res) => {
+  try {
+    const stats = enhancedLLM.getStats();
+    const providerStatus = enhancedLLM.getProviderStatus();
+    
+    res.json({
+      success: true,
+      stats,
+      providerStatus,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Chat] Error getting LLM stats:', error);
+    res.status(500).json({ error: 'Failed to get LLM statistics' });
+  }
+});
+
+/**
+ * POST /api/chat/test-providers
+ * Test all LLM providers
+ */
+router.post('/test-providers', async (req, res) => {
+  try {
+    console.log('[Chat] Testing all LLM providers...');
+    const testResults = await enhancedLLM.testProviders();
+    
+    res.json({
+      success: true,
+      testResults,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Chat] Error testing providers:', error);
+    res.status(500).json({ error: 'Failed to test LLM providers' });
+  }
+});

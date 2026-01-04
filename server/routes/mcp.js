@@ -12,17 +12,17 @@ router.get('/status', async (req, res) => {
     
     res.json({
       success: true,
-      available: mcpClient.isAvailable(),
-      initialized: mcpClient.initialized,
+      available: mcpClient ? mcpClient.initialized : false,
+      initialized: mcpClient ? mcpClient.initialized : false,
       servers: {
-        sacredTexts: !!mcpClient.sacredTextsClient,
-        deityPersonas: !!mcpClient.deityPersonasClient,
+        sacredTexts: mcpClient ? !!mcpClient.sacredTextsClient : false,
+        deityPersonas: mcpClient ? !!mcpClient.deityPersonasClient : false,
       },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: typeof error === 'string' ? error : 'MCP initialization failed',
       available: false,
     });
   }

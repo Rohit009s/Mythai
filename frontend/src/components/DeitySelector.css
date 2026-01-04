@@ -59,9 +59,11 @@
   align-items: center;
   padding: 2rem;
   margin-bottom: 3rem;
-  background: rgba(255, 255, 255, 0.15);
+background: rgba(255, 255, 255, 0.15);
   backdrop-filter: url(#deity-liquid-glass);
   -webkit-backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  color: #ffffff;
   border-radius: 25px;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.03),
               0 2px 6px rgba(0, 0, 0, 0.08),
@@ -69,6 +71,7 @@
               inset -3px -3px 0.5px -3px rgba(255, 255, 255, 0.85),
               inset 0 0 6px 6px rgba(255, 255, 255, 0.12),
               0 0 12px rgba(255, 255, 255, 0.15);
+  
   transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
 }
 
@@ -132,8 +135,11 @@
 
 .logout-btn-glass {
   padding: 0.75rem 1.5rem;
-  background: rgba(255, 255, 255, 0.25);
+background: rgba(255, 255, 255, 0.15);
   backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  color: #ffffff;
   border: none;
   border-radius: 20px;
   color: white;
@@ -216,24 +222,24 @@
 
 /* Liquid Glass Deity Cards */
 .deity-card-glass {
-  position: relative;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   backdrop-filter: url(#deity-liquid-glass);
   -webkit-backdrop-filter: url(#deity-liquid-glass);
-  border-radius: 25px;
-  padding: 2rem;
-  cursor: pointer;
-  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  position: relative;
+  border-radius: 30px;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.03),
               0 2px 6px rgba(0, 0, 0, 0.08),
               inset 3px 3px 0.5px -3px rgba(255, 255, 255, 0.9),
               inset -3px -3px 0.5px -3px rgba(255, 255, 255, 0.85),
-              inset 1px 1px 1px -0.5px rgba(255, 255, 255, 0.6),
-              inset -1px -1px 1px -0.5px rgba(255, 255, 255, 0.6),
               inset 0 0 6px 6px rgba(255, 255, 255, 0.12),
-              inset 0 0 2px 2px rgba(255, 255, 255, 0.06),
               0 0 12px rgba(255, 255, 255, 0.15);
-  overflow: hidden;
+  
+  border-radius: 25px;
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+   
 }
 
 .deity-card-glass::before {
@@ -411,14 +417,11 @@
 }
 
 .deity-card-bazaar {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.06) 100%
-  );
-  backdrop-filter: blur(35px) saturate(180%);
-  -webkit-backdrop-filter: blur(35px) saturate(180%);
-  border: 1.5px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-top: 2px solid rgba(255, 255, 255, 0.4);
   border-radius: 28px;
   overflow: hidden;
@@ -568,11 +571,67 @@
 
 .deity-footer-bazaar {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.75rem;
   align-items: center;
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.deity-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.deity-action-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.deity-action-btn.text-mode {
+background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  color: #ffffff;
+   
+  font-weight: 700;
+  color: white;
+
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5),
+               0 2px 10px rgba(0, 0, 0, 0.3);
+
+   border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.deity-action-btn.text-mode:hover {
+background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(60, 162, 250, 0.3);
+}
+
+.deity-action-btn.voice-mode {
+background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: url(#deity-liquid-glass);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  color: #fafbfc;
+   border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.deity-action-btn.voice-mode:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 5px 4px 12px rgb(216, 176, 117);
 }
 
 .deity-category-badge {
@@ -688,4 +747,96 @@
   letter-spacing: 0.08em;
   text-shadow: 0 0 25px rgba(102, 126, 234, 0.5);
   text-transform: uppercase;
+}
+/* Settings Modal */
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.settings-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  padding: 30px;
+  min-width: 300px;
+  max-width: 400px;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+.close-settings {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #ffd700;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-settings:hover {
+  background: rgba(255, 215, 0, 0.1);
+  transform: scale(1.1);
+}
+
+.settings-modal h3 {
+  color: #ffd700;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.settings-content button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.settings-content button:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.5);
+  transform: translateX(5px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
