@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as THREE from 'three'
+import { GlowCard } from './ui/glow-card'
 import './DeitySelector.css'
 
 // Deity data mapped to religions with categories and images
@@ -87,6 +88,24 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
   const starsRef = useRef([])
   const animationRef = useRef(null)
   const navigate = useNavigate()
+
+  // Function to determine glow color based on deity category/religion
+  const getDeityGlowColor = (category) => {
+    const colorMap = {
+      'Supreme': 'gold',
+      'Trinity': 'purple',
+      'Popular': 'blue',
+      'Avatar': 'cyan',
+      'Goddess': 'purple',
+      'Olympian': 'blue',
+      'Aesir': 'cyan',
+      'Vanir': 'green',
+      'Major': 'orange',
+      'Divine': 'gold',
+      'Prophet': 'green'
+    }
+    return colorMap[category] || 'blue'
+  }
 
   const handleDeitySelect = (deity) => {
     onSelect(deity) // Set the selected deity in parent component
@@ -302,9 +321,13 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
                 </h2>
                 <div className="deity-grid-bazaar">
                   {religionDeities.map(deity => (
-                    <div 
-                      key={deity.id} 
-                      className="deity-card-bazaar"
+                    <GlowCard
+                      key={deity.id}
+                      glowColor={getDeityGlowColor(deity.category)}
+                      customSize={true}
+                      enableLiquidGlass={true}
+                      intensity={1.2}
+                      className="deity-card-enhanced"
                     >
                       <div className="deity-image-wrapper-bazaar">
                         <img 
@@ -339,7 +362,7 @@ export default function DeitySelector({ user, onSelect, onLogout, apiUrl }) {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </GlowCard>
                   ))}
                 </div>
               </div>

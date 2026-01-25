@@ -5,10 +5,15 @@ let db;
 async function connectMongo(){
   const uri = process.env.MONGO_URI || 'mongodb://localhost:27017';
   const dbName = process.env.DB_NAME || 'mythai';
-  client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
-  await client.connect();
-  db = client.db(dbName);
-  console.log('Connected to MongoDB', uri, dbName);
+  
+  if (!client) {
+    client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
+    await client.connect();
+    db = client.db(dbName);
+    console.log('Connected to MongoDB', uri, dbName);
+  }
+  
+  return { client, db };
 }
 
 function getDb(){

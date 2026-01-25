@@ -1,4 +1,7 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '..', '.env') });
+// Load environment variables (Vercel handles this automatically)
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: require('path').resolve(__dirname, '..', '.env') });
+}
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
@@ -9,14 +12,20 @@ const convRoutes = require('./routes/conversations');
 const mcpRoutes = require('./routes/mcp');
 const memoryRoutes = require('./routes/memory');
 const callRoutes = require('./routes/call');
+const statusRoutes = require('./routes/status');
 const { authMiddleware, optionalAuthMiddleware } = require('./middleware/auth');
 const metricsCollector = require('./lib/metricsCollector');
 const { getMCPClient } = require('./lib/mcpClient');
 const conversationMemory = require('./lib/conversationMemory');
 const qdrantUtilizationManager = require('./lib/qdrantUtilizationManager');
+const externalDataLoader = require('./lib/externalDataLoader');
+const productionConfig = require('./config/productionConfig');
 
 // Make metrics collector globally available
 global.metricsCollector = metricsCollector;
+
+// Make external data loader globally available
+global.externalDataLoader = externalDataLoader;
 
 const PORT = process.env.PORT || 3000;
 
@@ -26,6 +35,12 @@ async function main(){
   
   app.use(cors());
   app.use(express.json());
+
+  // Serve static files from frontend build
+  if (process.env.NODE_ENV === 'production') {
+    const path = require('path');
+    app.use(express.static(path.join(__dirname, 'public')));
+  }
 
   try {
     await connectMongo();
@@ -52,6 +67,7 @@ async function main(){
   // Public routes (no auth required)
   app.use('/api/auth', authRoutes);
   app.use('/api/mcp', mcpRoutes); // MCP API routes
+  app.use('/api/status', statusRoutes); // Status and deployment info
   
   // Protected routes (optional auth for demo mode)
   app.use('/api/chat', optionalAuthMiddleware, chatRoutes);
@@ -59,9 +75,28 @@ async function main(){
   app.use('/api/memory', optionalAuthMiddleware, memoryRoutes); // 🧠 Memory API routes
   app.use('/api/call', optionalAuthMiddleware, callRoutes); // 📞 Call API routes
 
-  app.get('/', (req,res) => res.send('MythAI backend with Auth'));
+  app.get('/', (req,res) => {
+    if (process.env.NODE_ENV === 'production') {
+      const path = require('path');
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } else {
+      res.send('Spirit AI backend with Auth - Development Mode');
+    }
+  });
   
   app.get('/health', (req,res) => res.json({ status: 'ok', timestamp: new Date() }));
+
+  // Catch-all handler for frontend routes (SPA)
+  if (process.env.NODE_ENV === 'production') {
+    app.get('*', (req, res) => {
+      // Don't serve index.html for API routes
+      if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+      }
+      const path = require('path');
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+  }
   
   // Metrics endpoint
   app.get('/api/metrics', (req, res) => {
@@ -79,14 +114,26 @@ async function main(){
     }
   });
 
-  // Start server
-  server.listen(PORT, () => {
-    console.log(`Server listening on ${PORT}`);
-    console.log(`🎤 Voice streaming available at ws://localhost:${PORT}/voice-stream`);
+  // Start server (always start in production on Render)
+  const actualPort = process.env.PORT || PORT;
+  server.listen(actualPort, '0.0.0.0', () => {
+    console.log(`🚀 Spirit AI Server listening on port ${actualPort}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🎤 Voice streaming available at ws://localhost:${actualPort}/voice-stream`);
   });
+
+  // Return app for testing
+  return app;
 }
 
-main().catch(err => {
-  console.error('Fatal error starting server', err);
-  process.exit(1);
-});
+// Initialize the app
+if (require.main === module) {
+  // Direct execution
+  main().catch(err => {
+    console.error('Fatal error starting server', err);
+    process.exit(1);
+  });
+} else {
+  // Module export for testing
+  module.exports = main;
+}

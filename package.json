@@ -1,5 +1,23 @@
 {
+  "name": "spirit-ai",
+  "version": "2.1.0",
+  "description": "Spirit AI - Connect with Divine Wisdom",
+  "main": "server/index.js",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd server && npm start",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd frontend && npm run dev\"",
+    "install-all": "npm install && cd server && npm install && cd ../frontend && npm install"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1"
-  }
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Rohit Neelam <rohithneelam87@gmail.com>",
+  "license": "MIT"
 }

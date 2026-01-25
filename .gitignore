@@ -1,22 +1,33 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
-frontend/dist/
+server/node_modules/
+mcp-server/node_modules/
 
 # Environment variables (contains API keys and secrets)
 .env
-.kiro
-# IDE
+.env.local
+.env.production
+.env.development
+frontend/.env*
+server/.env*
+
+# IDE and Editor files
 /.vscode/
 .idea/
+.kiro/
 kiro/
+*.swp
+*.swo
+
 # Build outputs
 dist/
 build/
-data/voices
-data/texts
+frontend/dist/
+server/dist/
 
-# Embedding files (too large for Git - 164MB+)
+# Data files (large files excluded)
+data/voices/
 data/embeddings/*.json
 !data/embeddings/.gitkeep
 
@@ -24,16 +35,19 @@ data/embeddings/*.json
 audio/
 *.wav
 *.mp3
+*.ogg
+*.m4a
 
 # Logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # OS files
 .DS_Store
 Thumbs.db
-
-# Temporary files
 *.tmp
 *.temp
 
@@ -41,10 +55,25 @@ Thumbs.db
 __pycache__/
 *.pyc
 *.pyo
-tts-service/__pycache__/
 
 # Model cache
 .cache/
 models/
 
+# Deployment files
+.vercel/
+.netlify/
 
+# Package manager lock files (keep package-lock.json but ignore others)
+yarn.lock
+pnpm-lock.yaml
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock

@@ -75,12 +75,18 @@ const OtpVerification = ({ email, onVerificationSuccess, onResendOtp, apiUrl = '
     setError('');
 
     try {
-      const response = await fetch(`${apiUrl}/api/auth/resend-otp`, {
+      // Use Supabase Edge Function for sending OTP
+      const response = await fetch('https://ttpjmshzcicgvjhzkzfs.supabase.co/functions/v1/send-otp-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer sb_publishable_MMxMEAhYpZPj0SPcw6A1rA_5tBBKDV9',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          otp: Math.floor(100000 + Math.random() * 900000).toString(), // Generate 6-digit OTP
+          type: 'verification'
+        }),
       });
 
       const data = await response.json();
@@ -90,8 +96,12 @@ const OtpVerification = ({ email, onVerificationSuccess, onResendOtp, apiUrl = '
         // Clear current OTP
         setOtp(['', '', '', '', '', '']);
         document.getElementById('otp-0')?.focus();
+        setError(''); // Clear any previous errors
+        // Show success message briefly
+        setError('✅ New verification code sent to your email!');
+        setTimeout(() => setError(''), 3000);
       } else {
-        setError(data.message || 'Failed to resend code');
+        setError(data.error || 'Failed to resend code');
       }
     } catch (error) {
       setError('Network error. Please try again.');

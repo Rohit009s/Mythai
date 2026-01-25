@@ -96,13 +96,49 @@ export default function Auth({ onLogin, apiUrl }) {
           console.log('[Auth Debug] Login successful, calling onLogin')
           onLogin(data.user, data.token)
         } else {
-          // Registration successful - show OTP verification
-          console.log('[Auth Debug] Registration successful, switching to OTP view')
-          console.log('[Auth Debug] Setting registrationEmail to:', formData.email)
-          setRegistrationEmail(formData.email)
-          setView('verify-otp')
-          setMessage(`📧 OTP sent to ${formData.email}! Please check your email for the verification code.`)
-          console.log('[Auth Debug] View set to verify-otp, registrationEmail set to:', formData.email)
+          // Registration successful - send OTP via Supabase Edge Function
+          console.log('[Auth Debug] Registration successful, sending OTP via Supabase')
+          
+          try {
+            // Generate 6-digit OTP
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Send OTP via Supabase Edge Function
+            const otpResponse = await fetch('https://ttpjmshzcicgvjhzkzfs.supabase.co/functions/v1/send-otp-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer sb_publishable_MMxMEAhYpZPj0SPcw6A1rA_5tBBKDV9',
+              },
+              body: JSON.stringify({
+                email: formData.email,
+                otp: otpCode,
+                type: 'verification',
+                userName: formData.name
+              }),
+            });
+
+            const otpData = await otpResponse.json();
+            
+            if (otpData.success) {
+              console.log('[Auth Debug] OTP sent successfully, switching to OTP view')
+              console.log('[Auth Debug] Setting registrationEmail to:', formData.email)
+              setRegistrationEmail(formData.email)
+              setView('verify-otp')
+              setMessage(`📧 OTP sent to ${formData.email}! Please check your email for the verification code.`)
+              console.log('[Auth Debug] View set to verify-otp, registrationEmail set to:', formData.email)
+            } else {
+              console.error('[Auth Debug] Failed to send OTP:', otpData.error)
+              setError('Registration successful but failed to send verification email. Please try resending.')
+              setRegistrationEmail(formData.email)
+              setView('verify-otp')
+            }
+          } catch (otpError) {
+            console.error('[Auth Debug] OTP sending error:', otpError)
+            setError('Registration successful but failed to send verification email. Please try resending.')
+            setRegistrationEmail(formData.email)
+            setView('verify-otp')
+          }
         }
       } else {
         console.log('[Auth Debug] Request failed:', data.error)
