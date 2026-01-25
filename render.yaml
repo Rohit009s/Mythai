@@ -41,7 +41,7 @@ services:
         value: sb_publishable_MMxMEAhYpZPj0SPcw6A1rA_5tBBKDV9
 
   # Frontend Static Site
-  - type: static
+  - type: static_site
     name: spirit-ai-frontend
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
