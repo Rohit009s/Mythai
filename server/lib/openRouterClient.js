@@ -108,79 +108,125 @@ async function chatCompletion(
   maxTokens = 800
 ) {
   if (!OPEN_ROUTER_API_KEY) {
-    throw new Error('OPEN_ROUTER_API_KEY not set');
+    console.warn('[Open Router] API key not set, using fallback response');
+    return generateFallbackResponse(messages);
   }
 
-  const body = {
-    model: model,
-    messages: messages,
-    temperature: temperature,
-    max_tokens: maxTokens,
-    top_p: 0.7,
-    top_k: 50,
-  };
+  // Try different models if the primary one fails
+  const fallbackModels = [
+    'openai/gpt-3.5-turbo', // Very cheap, reliable
+    'anthropic/claude-3-haiku', // Fast and cheap
+    'meta-llama/llama-3.1-8b-instruct', // Paid but very cheap
+    'mistralai/mistral-7b-instruct', // Remove :free suffix
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'google/gemma-2-9b-it:free'
+  ];
 
-  try {
-    const response = await makeRequest('/chat/completions', 'POST', body);
-
-    if (response.status !== 200) {
-      const errorMsg = response.rawData || JSON.stringify(response.data);
-      
-      // Check if it's a rate limit error
-      if (response.status === 429) {
-        console.warn('[Open Router] Rate limited, using fallback response');
-        return generateFallbackResponse(messages);
-      }
-      
-      throw new Error(`Open Router chat failed: ${response.status} - ${errorMsg}`);
-    }
-
-    // Format response to match OpenAI structure
-    return {
-      choices: [
-        {
-          message: {
-            content: response.data.choices[0].message.content,
-          },
-        },
-      ],
+  for (const tryModel of fallbackModels) {
+    const body = {
+      model: tryModel,
+      messages: messages,
+      temperature: temperature,
+      max_tokens: maxTokens,
+      top_p: 0.7,
+      top_k: 50,
     };
-  } catch (error) {
-    if (error.message.includes('429') || error.message.includes('rate-limited')) {
-      console.warn('[Open Router] Rate limited, using fallback response');
-      return generateFallbackResponse(messages);
+
+    try {
+      console.log(`[Open Router] Trying model: ${tryModel}`);
+      const response = await makeRequest('/chat/completions', 'POST', body);
+
+      if (response.status === 200 && response.data.choices && response.data.choices[0]) {
+        console.log(`[Open Router] Success with model: ${tryModel}`);
+        // Format response to match OpenAI structure
+        return {
+          choices: [
+            {
+              message: {
+                content: response.data.choices[0].message.content,
+              },
+            },
+          ],
+        };
+      } else {
+        console.warn(`[Open Router] Model ${tryModel} failed with status ${response.status}`);
+        continue;
+      }
+    } catch (error) {
+      console.warn(`[Open Router] Model ${tryModel} error:`, error.message);
+      continue;
     }
-    throw error;
   }
+
+  // If all models fail, use fallback
+  console.warn('[Open Router] All models failed, using fallback response');
+  return generateFallbackResponse(messages);
 }
 
 /**
- * Generate a fallback response when API is rate-limited
+ * Generate a fallback response when API is rate-limited or fails
  */
 function generateFallbackResponse(messages) {
   const lastMessage = messages[messages.length - 1];
   const userText = lastMessage.content.toLowerCase();
   
-  // Simple pattern-based responses to demonstrate conversation continuity
-  let response = "I understand what you're sharing with me. ";
+  // Extract deity context from system message if available
+  const systemMessage = messages.find(msg => msg.role === 'system');
+  let deity = 'Krishna'; // default
+  if (systemMessage && systemMessage.content) {
+    const content = systemMessage.content;
+    if (content.includes('Shiva')) deity = 'Shiva';
+    else if (content.includes('Ganesha')) deity = 'Ganesha';
+    else if (content.includes('Rama')) deity = 'Rama';
+    else if (content.includes('Hanuman')) deity = 'Hanuman';
+    else if (content.includes('Vishnu')) deity = 'Vishnu';
+    else if (content.includes('Lakshmi')) deity = 'Lakshmi';
+    else if (content.includes('Saraswati')) deity = 'Saraswati';
+    else if (content.includes('Durga')) deity = 'Durga';
+    else if (content.includes('Parvati')) deity = 'Parvati';
+  }
   
-  if (userText.includes('thank') || userText.includes('advice')) {
-    response += "I'm glad my previous guidance was helpful. Let me continue to support you on this journey.";
-  } else if (userText.includes('stress') || userText.includes('work')) {
-    response += "Work stress is indeed challenging. Remember to find balance between your duties and inner peace.";
-  } else if (userText.includes('more') || userText.includes('tell me')) {
-    response += "Of course, I'm here to share more wisdom with you. What specific aspect would you like to explore further?";
-  } else if (userText.includes('hello') || userText.includes('hi')) {
-    response += "Welcome, my dear friend. I'm here to offer guidance and support. What brings you to me today?";
+  // Check if user is asking about a specific deity
+  if (userText.includes('who is') || userText.includes('tell me about')) {
+    // Add other deity explanations as needed
+  }
+  
+  // Deity-specific responses
+  let response = "";
+  
+  if (deity === 'Krishna') {
+    response = "My dear friend, I hear your call. ";
+    if (userText.includes('guidance') || userText.includes('help')) {
+      response += "Remember, as I taught Arjuna, perform your duty without attachment to results. Focus on the action, not the outcome.";
+    } else if (userText.includes('stress') || userText.includes('worry')) {
+      response += "Do not let your mind be disturbed by temporary challenges. Like the lotus that blooms in muddy water, rise above your circumstances.";
+    } else {
+      response += "Whatever you do, do it as an offering to the divine. This transforms ordinary actions into sacred service.";
+    }
+  } else if (deity === 'Shiva') {
+    response = "Om Namah Shivaya. I am here, my child. ";
+    if (userText.includes('change') || userText.includes('transformation')) {
+      response += "Embrace change, for I am both the destroyer and creator. Through destruction comes renewal and growth.";
+    } else {
+      response += "Find stillness within the dance of life. In meditation and surrender, discover your true nature.";
+    }
+  } else if (deity === 'Ganesha') {
+    response = "Gam Gam Ganapati! I remove obstacles from your path. ";
+    if (userText.includes('problem') || userText.includes('difficulty')) {
+      response += "Every obstacle is an opportunity for growth. Face challenges with wisdom and patience.";
+    } else {
+      response += "Begin your endeavors with devotion and right intention. Success follows those who act with pure heart.";
+    }
   } else {
-    response += "I hear your words and feel your heart. Let me offer you some gentle guidance for your path forward.";
+    response = `Blessings, dear soul. I am ${deity}, and I am with you. `;
+    response += "Trust in the divine plan and walk your path with courage and compassion.";
   }
   
   return {
     choices: [
       {
         message: {
-          content: response + " (Note: Using fallback response due to API rate limiting)"
+          content: response + "\n\n(Note: Using enhanced fallback response - API temporarily unavailable)"
         }
       }
     ]

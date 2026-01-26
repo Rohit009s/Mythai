@@ -2,18 +2,22 @@
   "name": "spirit-ai",
   "version": "2.1.0",
   "description": "Spirit AI - Connect with Divine Wisdom",
-  "main": "server/index.js",
+  "main": "api/index.js",
   "scripts": {
     "build": "cd frontend && npm install && npm run build",
-    "start": "cd server && npm start",
-    "dev": "concurrently \"cd server && npm run dev\" \"cd frontend && npm run dev\"",
-    "install-all": "npm install && cd server && npm install && cd ../frontend && npm install"
+    "dev": "vercel dev",
+    "deploy": "node deploy-vercel.js",
+    "install-all": "npm install && cd frontend && npm install"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.1"
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.3.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "vercel": "^33.0.1"
   },
   "engines": {
     "node": ">=18.0.0"

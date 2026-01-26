@@ -333,6 +333,45 @@ router.post('/', async (req,res) => {
     // Initialize retrieved array for RAG results
     let retrieved = [];
 
+    // 🔍 RAG RETRIEVAL: Search for relevant sacred texts
+    if (questionType.needsReference || intentClassification?.useScriptureRAG) {
+      console.log(`[RAG] Searching for relevant texts - Query: "${userMessage}"`);
+      
+      try {
+        // Generate embedding for the user's question
+        const queryEmbedding = await embedText(userMessage);
+        console.log(`[RAG] Generated embedding for query (dimension: ${queryEmbedding.length})`);
+        
+        // Search in Qdrant vector database
+        const collectionName = process.env.QDRANT_COLLECTION || 'myth_texts_384';
+        const searchResults = await search(collectionName, queryEmbedding, TOP_K, {
+          // Filter by deity's books if specified
+          books: deityBooks.includes('All Sacred Texts') ? null : deityBooks,
+          deity: basePersona,
+          language: user.language || 'en'
+        });
+        
+        if (searchResults && searchResults.length > 0) {
+          retrieved = searchResults;
+          console.log(`[RAG] Found ${retrieved.length} relevant passages`);
+          
+          // Log the sources found
+          retrieved.forEach((result, index) => {
+            const source = result.payload?.source_title || result.payload?.file || 'Unknown';
+            const snippet = result.payload?.text?.substring(0, 100) || 'No text';
+            console.log(`[RAG] ${index + 1}. ${source}: "${snippet}..." (score: ${result.score?.toFixed(3)})`);
+          });
+        } else {
+          console.log(`[RAG] No relevant passages found for query: "${userMessage}"`);
+        }
+      } catch (ragError) {
+        console.error('[RAG] Vector search failed:', ragError.message);
+        console.log('[RAG] Continuing without RAG context');
+      }
+    } else {
+      console.log(`[RAG] Skipping vector search - casual conversation detected`);
+    }
+
     // Build context from retrieved chunks
     let answer = null;
     let usedSources = [];

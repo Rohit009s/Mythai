@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dist/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "MONGO_URI": "@mongo_uri",
+    "DB_NAME": "@db_name",
+    "JWT_SECRET": "@jwt_secret",
+    "QDRANT_URL": "@qdrant_url",
+    "QDRANT_API_KEY": "@qdrant_api_key",
+    "OPEN_ROUTER_API_KEY": "@open_router_api_key",
+    "RESEND_API_KEY": "@resend_api_key",
+    "ELEVENLABS_API_KEY": "@elevenlabs_api_key",
+    "SARVAM_API_KEY": "@sarvam_api_key",
+    "GEMINI_API_KEY": "@gemini_api_key",
+    "EMAIL_FROM_VERIFIED": "@email_from_verified",
+    "EMAIL_REPLY_TO": "@email_reply_to",
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_ANON_KEY": "@supabase_anon_key"
+  },
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://spirit-ai-v2.vercel.app/api",
+      "VITE_SUPABASE_URL": "@supabase_url",
+      "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key"
+    }
+  },
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 30
+    }
+  }
+}
