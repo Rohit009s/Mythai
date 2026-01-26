@@ -388,8 +388,6 @@ export default function Chat({ user, deity, onLogout, apiUrl, existingConversati
       <WebGLBackground />
       
 
-      
-
       <div className="chat-messages">
         {conversationLoading ? (
           <div className="conversation-loading">
