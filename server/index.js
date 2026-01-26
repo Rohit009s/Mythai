@@ -46,11 +46,8 @@ async function main(){
   app.use(cors(corsOptions));
   app.use(express.json());
 
-  // Serve static files from frontend build
-  if (process.env.NODE_ENV === 'production') {
-    const path = require('path');
-    app.use(express.static(path.join(__dirname, 'public')));
-  }
+  // Remove static file serving since frontend is on Vercel
+  // Backend only serves API endpoints
 
   try {
     await connectMongo();
@@ -86,27 +83,20 @@ async function main(){
   app.use('/api/call', optionalAuthMiddleware, callRoutes); // 📞 Call API routes
 
   app.get('/', (req,res) => {
-    if (process.env.NODE_ENV === 'production') {
-      const path = require('path');
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    } else {
-      res.send('Spirit AI backend with Auth - Development Mode');
-    }
+    res.json({ 
+      message: 'Spirit AI Backend API', 
+      status: 'running',
+      frontend: 'https://spirit-ai-psi.vercel.app',
+      timestamp: new Date().toISOString()
+    });
   });
   
   app.get('/health', (req,res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-  // Catch-all handler for frontend routes (SPA)
-  if (process.env.NODE_ENV === 'production') {
-    app.get('*', (req, res) => {
-      // Don't serve index.html for API routes
-      if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
-      }
-      const path = require('path');
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
-  }
+  // API 404 handler
+  app.use('/api/*', (req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+  });
   
   // Metrics endpoint
   app.get('/api/metrics', (req, res) => {
