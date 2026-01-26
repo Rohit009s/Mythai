@@ -12,6 +12,9 @@ mcp-server/node_modules/
 frontend/.env*
 server/.env*
 
+# Deployment configuration (contains sensitive API keys)
+render.yaml
+
 # IDE and Editor files
 /.vscode/
 .idea/
