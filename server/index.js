@@ -33,7 +33,17 @@ async function main(){
   const app = express();
   const server = http.createServer(app);
   
-  app.use(cors());
+  // Configure CORS for production
+  const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://spirit-ai-psi.vercel.app', 'https://spirit-ai-backend.onrender.com']
+      : ['http://localhost:5173', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  };
+  
+  app.use(cors(corsOptions));
   app.use(express.json());
 
   // Serve static files from frontend build
